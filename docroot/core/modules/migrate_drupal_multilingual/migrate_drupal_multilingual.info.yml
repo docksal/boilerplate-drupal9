@@ -1,0 +1,7 @@
+name: 'Migrate Drupal Multilingual'
+type: module
+description: 'Provides a requirement for multilingual migrations.'
+package: 'Core (Experimental)'
+dependencies:
+  - drupal:migrate_drupal
+hidden: true
