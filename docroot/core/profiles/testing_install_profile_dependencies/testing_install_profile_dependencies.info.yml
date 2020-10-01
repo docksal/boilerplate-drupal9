@@ -1,7 +1,7 @@
 name: 'Testing install profile dependencies'
 type: profile
 description: 'Profile for testing that install profiles can require a module.'
-version: VERSION
+# version: VERSION
 hidden: true
 dependencies:
   - drupal:dblog
@@ -9,3 +9,8 @@ install:
   - ban
 themes:
   - classy
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

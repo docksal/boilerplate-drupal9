@@ -2,5 +2,10 @@ name: Testing
 type: module
 description: 'Deprecated. SimpleTest has been removed from core.'
 package: Core
-version: VERSION
+# version: VERSION
 hidden: true
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

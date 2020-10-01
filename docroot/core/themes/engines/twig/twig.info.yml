@@ -1,4 +1,9 @@
 type: theme_engine
 name: Twig
-version: VERSION
+# version: VERSION
 package: Core
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

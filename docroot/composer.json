@@ -1,6 +1,6 @@
 {
-    "name": "drupal/recommended-project",
-    "description": "Project template for Drupal 9 projects with a relocated document root",
+    "name": "drupal/legacy-project",
+    "description": "Project template for Drupal 9 projects with composer following drupal/drupal layout",
     "type": "project",
     "license": "GPL-2.0-or-later",
     "homepage": "https://www.drupal.org/project/drupal",
@@ -18,10 +18,8 @@
         "composer/installers": "^1.9",
         "drupal/core-composer-scaffold": "^9",
         "drupal/core-project-message": "^9",
-        "drupal/core-recommended": "^9"
-    },
-    "require-dev": {
-        "drush/drush": "^10.2"
+        "drupal/core-recommended": "^9",
+        "drupal/core-vendor-hardening": "^9"
     },
     "conflict": {
         "drupal/drupal": "*"
@@ -35,9 +33,6 @@
         "drupal-scaffold": {
             "locations": {
                 "web-root": "./"
-            },
-            "file-mapping": {
-                "[web-root]/sites/default/default.settings.php": false
             }
         },
         "installer-paths": {
@@ -56,7 +51,7 @@
             "themes/contrib/{$name}": [
                 "type:drupal-theme"
             ],
-            "Commands/contrib/{$name}": [
+            "drush/Commands/contrib/{$name}": [
                 "type:drupal-drush"
             ],
             "modules/custom/{$name}": [
@@ -74,7 +69,7 @@
             "post-create-project-cmd-message": [
                 "<bg=blue;fg=white>                                                         </>",
                 "<bg=blue;fg=white>  Congratulations, you’ve installed the Drupal codebase  </>",
-                "<bg=blue;fg=white>  from the drupal/recommended-project template!          </>",
+                "<bg=blue;fg=white>  from the drupal/legacy-project template!               </>",
                 "<bg=blue;fg=white>                                                         </>",
                 "",
                 "<bg=yellow;fg=black>Next steps</>:",

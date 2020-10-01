@@ -2,4 +2,9 @@ name: 'Update test base theme'
 type: theme
 base theme: stable
 description: 'Test theme which acts as a base theme for other test subthemes.'
-version: VERSION
+# version: VERSION
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

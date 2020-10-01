@@ -11,7 +11,7 @@
 name: '<strong>Test theme</strong>'
 type: theme
 description: 'Theme for testing the theme system'
-version: VERSION
+# version: VERSION
 base theme: classy
 logo: images/logo2.svg
 libraries:
@@ -67,3 +67,8 @@ regions:
   content: Content
   left: Left
   right: Right
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

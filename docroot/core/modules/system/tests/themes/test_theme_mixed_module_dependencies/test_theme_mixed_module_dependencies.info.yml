@@ -3,3 +3,8 @@ type: theme
 base theme: test_theme_depending_on_modules
 dependencies:
   - help
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

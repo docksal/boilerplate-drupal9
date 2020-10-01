@@ -2,7 +2,7 @@ name: Stable 9
 type: theme
 description: A base theme using Drupal 9.0.0's core markup and CSS.
 package: Core
-version: VERSION
+# version: VERSION
 base theme: false
 hidden: true
 
@@ -320,3 +320,8 @@ libraries-override:
       theme:
         css/views_ui.admin.theme.css: css/views_ui/views_ui.admin.theme.css
         css/views_ui.contextual.css: css/views_ui/views_ui.contextual.css
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

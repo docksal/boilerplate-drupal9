@@ -19,6 +19,7 @@ use Drupal\Core\Security\TrustedCallbackInterface;
 use Drupal\Core\Theme\ThemeManagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\FileBag;
+use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -860,7 +861,8 @@ class FormBuilder implements FormBuilderInterface, FormValidatorInterface, FormS
     //   https://www.drupal.org/node/2504709.
     $parsed = UrlHelper::parse($request_uri);
     unset($parsed['query'][static::AJAX_FORM_REQUEST], $parsed['query'][MainContentViewSubscriber::WRAPPER_FORMAT]);
-    return $parsed['path'] . ($parsed['query'] ? ('?' . UrlHelper::buildQuery($parsed['query'])) : '');
+    $action =  $parsed['path'] . ($parsed['query'] ? ('?' . UrlHelper::buildQuery($parsed['query'])) : '');
+    return UrlHelper::filterBadProtocol($action);
   }
 
   /**
@@ -957,8 +959,16 @@ class FormBuilder implements FormBuilderInterface, FormValidatorInterface, FormS
             // This value is checked in self::handleInputElement().
             $form_state->setInvalidToken(TRUE);
 
+            // Ignore all submitted values.
+            $form_state->setUserInput([]);
+
+            $request = $this->requestStack->getCurrentRequest();
+            // Do not trust any POST data.
+            $request->request = new ParameterBag();
             // Make sure file uploads do not get processed.
-            $this->requestStack->getCurrentRequest()->files = new FileBag();
+            $request->files = new FileBag();
+            // Ensure PHP globals reflect these changes.
+            $request->overrideGlobals();
           }
         }
       }

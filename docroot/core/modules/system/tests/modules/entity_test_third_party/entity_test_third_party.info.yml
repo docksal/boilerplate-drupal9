@@ -2,6 +2,11 @@ name: 'Entity test third-party settings module'
 type: module
 description: 'Provides third-party settings for test entity types.'
 package: Testing
-version: VERSION
+# version: VERSION
 dependencies:
   - drupal:entity_test
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

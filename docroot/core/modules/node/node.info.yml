@@ -2,7 +2,12 @@ name: Node
 type: module
 description: 'Allows content to be submitted to the site and displayed on pages.'
 package: Core
-version: VERSION
+# version: VERSION
 configure: entity.node_type.collection
 dependencies:
   - drupal:text
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

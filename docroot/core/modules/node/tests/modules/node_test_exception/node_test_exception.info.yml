@@ -2,4 +2,9 @@ name: 'Node module exception tests'
 type: module
 description: 'Support module for node related exception testing.'
 package: Testing
-version: VERSION
+# version: VERSION
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

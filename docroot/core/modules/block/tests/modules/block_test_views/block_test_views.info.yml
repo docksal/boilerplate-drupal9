@@ -2,7 +2,12 @@ name: 'Block test views'
 type: module
 description: 'Provides a view and block to test block displays in views.'
 package: Testing
-version: VERSION
+# version: VERSION
 dependencies:
   - drupal:block
   - drupal:views
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

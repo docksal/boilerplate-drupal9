@@ -2,4 +2,9 @@ name: 'Experimental Test'
 type: module
 description: 'Module in the experimental package to test experimental functionality.'
 package: Core (Experimental)
-version: 8.y.x-unstable
+# version: 8.y.x-unstable
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

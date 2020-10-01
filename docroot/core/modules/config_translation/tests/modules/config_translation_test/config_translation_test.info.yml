@@ -2,7 +2,12 @@ name: 'Configuration Translation Test'
 description: 'Helpers to test the configuration translation system'
 type: module
 package: Testing
-version: VERSION
+# version: VERSION
 dependencies:
   - drupal:config_translation
   - drupal:config_test
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

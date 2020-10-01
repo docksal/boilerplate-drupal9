@@ -251,7 +251,7 @@ function install_state_defaults() {
     // required translation file.
     'server_pattern' => 'http://ftp.drupal.org/files/translations/%core/%project/%project-%version.%language.po',
     // Installation tasks can set this to TRUE to force the page request to
-    // end (even if there is no themable output), in the case of an interactive
+    // end (even if there is no themeable output), in the case of an interactive
     // installation. This is needed only rarely; for example, it would be used
     // by an installation task that prints JSON output rather than returning a
     // themed page. The most common example of this is during batch processing,
@@ -1020,7 +1020,7 @@ function install_display_output($output, $install_state) {
   // Prevent install.php from being indexed when installed in a sub folder.
   // robots.txt rules are not read if the site is within domain.com/subfolder
   // resulting in /subfolder/install.php being found through search engines.
-  // When settings.php is writeable this can be used via an external database
+  // When settings.php is writable this can be used via an external database
   // leading a malicious user to gain php access to the server.
   $noindex_meta_tag = [
     '#tag' => 'meta',

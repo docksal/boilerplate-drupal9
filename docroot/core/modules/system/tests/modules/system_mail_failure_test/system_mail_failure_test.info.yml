@@ -2,4 +2,9 @@ name: 'System mail failure test'
 type: module
 description: 'Provides a malfunctioning mail service for testing purposes.'
 package: Testing
-version: VERSION
+# version: VERSION
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

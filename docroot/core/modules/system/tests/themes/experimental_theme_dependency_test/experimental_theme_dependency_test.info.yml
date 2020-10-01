@@ -1,5 +1,10 @@
 name: 'Experimental dependency test'
 type: theme
 description: 'Experimental dependency test theme.'
-version: VERSION
+# version: VERSION
 base theme: experimental_theme_test
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

@@ -2,3 +2,8 @@ name: 'Update test'
 type: module
 description: 'Support module for update module testing.'
 package: Testing
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

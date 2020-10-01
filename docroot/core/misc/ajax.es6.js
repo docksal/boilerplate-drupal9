@@ -559,6 +559,7 @@
         }
       },
       dataType: 'json',
+      jsonp: false,
       type: 'POST',
     };
 
@@ -1225,7 +1226,7 @@
       let $newContent = $($.parseHTML(response.data, document, true));
       // For backward compatibility, in some cases a wrapper will be added. This
       // behavior will be removed before Drupal 9.0.0. If different behavior is
-      // needed, the theme functions can be overriden.
+      // needed, the theme functions can be overridden.
       // @see https://www.drupal.org/node/2940704
       $newContent = Drupal.theme(
         'ajaxWrapperNewContent',

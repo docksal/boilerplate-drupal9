@@ -2,6 +2,11 @@ name: 'Color test theme'
 type: theme
 base theme: stable
 description: 'Theme for testing the color module'
-version: VERSION
+# version: VERSION
 libraries:
   - color_test_theme/base
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

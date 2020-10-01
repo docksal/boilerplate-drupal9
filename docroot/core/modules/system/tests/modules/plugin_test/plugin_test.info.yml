@@ -2,4 +2,9 @@ name: 'Plugin Test Support'
 type: module
 description: 'Test that plugins can provide plugins and provide namespace discovery for plugin test implementations.'
 package: Testing
-version: VERSION
+# version: VERSION
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

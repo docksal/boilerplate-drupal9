@@ -14,7 +14,7 @@
   --color-lightgray-o-80: rgba(212, 212, 218, 0.8);
   --color-grayblue: #8e929c;
   --color-oldsilver: #82828c;
-  --color-davysgrey: #545560;
+  --color-davysgray: #545560;
   --color-maximumred: #d72222;
   --color-sunglow: #ffd23f;
   --color-sunglow-shaded: #977405;
@@ -82,7 +82,7 @@
    */
   --input-fg-color: var(--color-fg);
   --input-bg-color: var(--color-bg);
-  --input-fg-color--description: var(--color-davysgrey);
+  --input-fg-color--description: var(--color-davysgray);
   --input-fg-color--placeholder: var(--color-grayblue);
   --input-border-color: var(--color-grayblue);
   --input--hover-border-color: var(--color-text);
@@ -90,7 +90,7 @@
   --input--focus-shadow-color: rgba(0, 74, 220, 0.3); /* Absolute zero with opacity. */
   --input--error-color: var(--color-maximumred);
   --input--error-border-color: var(--color-maximumred);
-  --input--disabled-color: rgba(84, 85, 96, 0.6); /* Davy's grey with 0.6 opacity. */
+  --input--disabled-color: rgba(84, 85, 96, 0.6); /* Davy's gray with 0.6 opacity. */
   --input--disabled-fg-color: var(--color-oldsilver);
   --input--disabled-bg-color: #f2f2f3; /* Light gray with 0.3 opacity on white bg. */
   --input--disabled-border-color: #bababf; /* Old silver with 0.5 opacity on white bg. */
@@ -149,12 +149,28 @@
   /**
    * jQuery.UI dropdown.
    */
-  --jui-dropdown-fg-color: var(--color-davysgrey);
+  --jui-dropdown-fg-color: var(--color-davysgray);
   --jui-dropdown-bg-color: var(--color-white);
   --jui-dropdown--active-fg-color: var(--color-white);
   --jui-dropdown--active-bg-color: var(--color-absolutezero);
   --jui-dropdown-border-color: rgba(216, 217, 224, 0.8); /* Light gray with 0.8 opacity. */
   --jui-dropdown-shadow-color: rgba(34, 35, 48, 0.1); /* Text color with 0.1 opacity. */
+  /**
+   * jQuery.UI dialog.
+   */
+  --jui-dialog-title-color: var(--color-white);
+  --jui-dialog-title-bg-color: var(--color-text);
+  --jui-dialog-title-font-size: var(--font-size-h4);
+  --jui-dialog-close-button-size: calc(var(--space-m) * 2);
+  --jui-dialog-close-button-border-radius: 50%;
+  --jui-dialog-close-button-reserved-space: calc(var(--space-m) * 4);
+  --jui-dialog-off-canvas-close-button-reserved-space: calc(var(--space-m) * 3);
+  --jui-dialog-border-radius: 4px;
+  --jui-dialog-box-shadow: 0 0 var(--space-m) calc(var(--space-m) / -4) var(--color-text);
+  --jui-dialog--focus-outline: 2px dotted transparent;
+  --jui-dialog--focus-box-shadow: 0 0 0 3px var(--color-focus);
+  --jui-dialog-z-index: 1260;
+  --jui-dialog-off-canvas-z-index: 501;
   /**
    * Progress bar.
    */
@@ -164,7 +180,7 @@
   --progress-bar-spacing-size: var(--space-xs);
   --progress-bar-transition: width 0.5s ease-out;
   --progress-bar-label-color: var(--color-text);
-  --progress-bar-description-color: var(--color-davysgrey);
+  --progress-bar-description-color: var(--color-davysgray);
   --progress-bar-description-font-size: var(--font-size-xs);
   --progress-track-border-color: var(--color-grayblue);
   --progress-track-bg-color: var(--color-lightgray);

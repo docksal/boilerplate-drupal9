@@ -1,7 +1,7 @@
 name: Standard
 type: profile
 description: 'Install with commonly used features pre-configured.'
-version: VERSION
+# version: VERSION
 install:
   - node
   - history
@@ -41,3 +41,8 @@ install:
 themes:
   - bartik
   - seven
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

@@ -5,3 +5,8 @@ package: Web services
 configure: jsonapi.settings
 dependencies:
   - drupal:serialization
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

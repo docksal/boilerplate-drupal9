@@ -1,7 +1,7 @@
 name: 'Test theme libraries-extend'
 type: theme
 description: 'Test Theme with libraries-extend'
-version: VERSION
+# version: VERSION
 base theme: classy
 libraries-extend:
   classy/book-navigation:
@@ -12,3 +12,8 @@ libraries-extend:
   test_theme/collapse:
     - not_a_string:
         expected: 'an exception'
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

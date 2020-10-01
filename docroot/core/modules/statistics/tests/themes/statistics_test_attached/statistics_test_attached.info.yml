@@ -2,4 +2,9 @@ name: 'Statistics test attached theme'
 type: theme
 base theme: stable
 description: 'Theme for testing attached library'
-version: VERSION
+# version: VERSION
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

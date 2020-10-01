@@ -4,5 +4,10 @@ description: 'Allows users to translate content.'
 dependencies:
   - drupal:language
 package: Multilingual
-version: VERSION
+# version: VERSION
 configure: language.content_settings_page
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

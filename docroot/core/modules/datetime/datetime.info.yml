@@ -2,6 +2,11 @@ name: Datetime
 type: module
 description: Defines datetime form elements and a datetime field type.
 package: Field types
-version: VERSION
+# version: VERSION
 dependencies:
   - drupal:field
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

@@ -2,7 +2,7 @@ name: Stable
 type: theme
 description: A default base theme using Drupal 8.0.0's core markup and CSS.
 package: Core
-version: VERSION
+# version: VERSION
 base theme: false
 hidden: true
 
@@ -306,3 +306,8 @@ libraries-extend:
     - stable/drupal.ajax
   user/drupal.user:
     - stable/drupal.user
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

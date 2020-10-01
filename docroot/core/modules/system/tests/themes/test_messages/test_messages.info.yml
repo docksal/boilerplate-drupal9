@@ -1,5 +1,10 @@
 name: 'Theme test messages'
 type: theme
 description: 'Test theme which provides another div for messages.'
-version: VERSION
+# version: VERSION
 base theme: classy
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

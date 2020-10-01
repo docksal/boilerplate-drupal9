@@ -16,7 +16,7 @@ base theme: false
 description: 'A clean, accessible, and powerful Drupal administration theme.'
 alt text: 'Screenshot of Claro, Drupal administration theme.'
 package: Core
-version: VERSION
+# version: VERSION
 experimental: true
 libraries:
  - core/drupal.message
@@ -37,6 +37,11 @@ libraries-override:
     css:
       theme:
         css/system.admin.css: false
+
+  core/drupal.dialog.off_canvas:
+    css:
+      base:
+        misc/dialog/off-canvas.theme.css: css/base/off-canvas.theme.css
 
   core/drupal.dropbutton:
     css:
@@ -117,6 +122,8 @@ libraries-extend:
     - claro/views
   media/media_embed_ckeditor_theme:
     - claro/classy.media_embed_ckeditor_theme
+  media_library/ui:
+    - claro/media_library.ui
   media_library/view:
     - claro/media_library.theme
   media_library/widget:
@@ -142,3 +149,8 @@ regions:
   sidebar_first: 'First sidebar'
 regions_hidden:
   - sidebar_first
+
+# Information added by Drupal.org packaging script on 2020-09-16
+version: '9.0.6'
+project: 'drupal'
+datestamp: 1600275880

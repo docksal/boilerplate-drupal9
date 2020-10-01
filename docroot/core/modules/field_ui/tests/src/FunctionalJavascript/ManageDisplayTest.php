@@ -51,7 +51,17 @@ class ManageDisplayTest extends WebDriverTestBase {
     $this->drupalPlaceBlock('system_breadcrumb_block');
 
     // Create a test user.
-    $admin_user = $this->drupalCreateUser(['access content', 'administer content types', 'administer node fields', 'administer node form display', 'administer node display', 'administer users', 'administer account settings', 'administer user display', 'bypass node access']);
+    $admin_user = $this->drupalCreateUser([
+      'access content',
+      'administer content types',
+      'administer node fields',
+      'administer node form display',
+      'administer node display',
+      'administer users',
+      'administer account settings',
+      'administer user display',
+      'bypass node access',
+    ]);
     $this->drupalLogin($admin_user);
 
     // Create content type, with underscores.
@@ -100,7 +110,7 @@ class ManageDisplayTest extends WebDriverTestBase {
     $field_test_settings = $page->find('css', 'input[name="field_test_settings_edit"]');
     $weight_toggle = $page->find('css', '.tabledrag-toggle-weight');
 
-    // Assert the format typr field is visible and contains the expected
+    // Assert the format type field is visible and contains the expected
     // formatter.
     $this->assertTrue($field_test_format_type->isVisible());
     $this->assertEquals($format, $field_test_format_type->getValue());
