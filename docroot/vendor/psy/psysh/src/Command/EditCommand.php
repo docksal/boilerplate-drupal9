@@ -140,7 +140,7 @@ class EditCommand extends Command implements ContextAware
     {
         // If the file argument was a variable, get it from the context
         if ($fileArgument !== null &&
-            \strlen($fileArgument) > 0 &&
+            $fileArgument !== '' &&
             $fileArgument[0] === '$') {
             $fileArgument = $this->context->get(\preg_replace('/^\$/', '', $fileArgument));
         }
@@ -162,7 +162,7 @@ class EditCommand extends Command implements ContextAware
         $editor = (isset($_SERVER['EDITOR']) && $_SERVER['EDITOR']) ? $_SERVER['EDITOR'] : 'nano';
 
         $pipes = [];
-        $proc = \proc_open("{$editor} {$escapedFilePath}", [STDIN, STDOUT, STDERR], $pipes);
+        $proc = \proc_open("{$editor} {$escapedFilePath}", [\STDIN, \STDOUT, \STDERR], $pipes);
         \proc_close($proc);
 
         $editedContent = @\file_get_contents($filePath);

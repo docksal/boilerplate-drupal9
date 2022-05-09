@@ -1,13 +1,15 @@
 <?php
 namespace Drush\Drupal\Commands\config;
 
+use Consolidation\AnnotatedCommand\CommandData;
+use Consolidation\AnnotatedCommand\CommandError;
 use Drupal\config\StorageReplaceDataWrapper;
 use Drupal\Core\Cache\CacheBackendInterface;
-use Drupal\Core\Config\ConfigManagerInterface;
-use Drupal\Core\Config\StorageComparer;
-use Drupal\Core\Config\ConfigImporter;
 use Drupal\Core\Config\ConfigException;
+use Drupal\Core\Config\ConfigImporter;
+use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\FileStorage;
+use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
@@ -18,7 +20,6 @@ use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drush\Commands\DrushCommands;
 use Drush\Exceptions\UserAbortException;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Webmozart\PathUtil\Path;
 
 class ConfigImportCommands extends DrushCommands
@@ -102,6 +103,8 @@ class ConfigImportCommands extends DrushCommands
     }
 
     /**
+     * Note that type hint is changing https://www.drupal.org/project/drupal/issues/3161983
+     *
      * @return \Symfony\Component\EventDispatcher\EventDispatcherInterface
      */
     public function getEventDispatcher()
@@ -187,7 +190,7 @@ class ConfigImportCommands extends DrushCommands
      * @param StorageInterface $configStorageSync
      * @param \Drupal\Core\Cache\CacheBackendInterface $configCache
      * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
-     * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
+     * @param $eventDispatcher
      * @param \Drupal\Core\Lock\LockBackendInterface $lock
      * @param \Drupal\Core\Config\TypedConfigManagerInterface $configTyped
      * @param \Drupal\Core\Extension\ModuleInstallerInterface $moduleInstaller
@@ -201,7 +204,8 @@ class ConfigImportCommands extends DrushCommands
         StorageInterface $configStorageSync,
         CacheBackendInterface $configCache,
         ModuleHandlerInterface $moduleHandler,
-        EventDispatcherInterface $eventDispatcher,
+        // Omit type hint as it changed in https://www.drupal.org/project/drupal/issues/3161983
+        $eventDispatcher,
         LockBackendInterface $lock,
         TypedConfigManagerInterface $configTyped,
         ModuleInstallerInterface $moduleInstaller,
@@ -227,10 +231,23 @@ class ConfigImportCommands extends DrushCommands
     /**
      * Import config from a config directory.
      *
-     * This command is invoked through a wrapper command because it requires to
-     * be bootstrapped using the UpdateKernel.
+     * @command config:import
      *
-     * @see \Drush\Commands\config\ConfigImportCommands::import()
+     * @param string $label A config directory label (i.e. a key in \$config_directories array in settings.php).
+     * @param array $options
+     *
+     * @return bool|void
+     * @interact-config-label
+     * @option diff Show preview as a diff.
+     * @option preview Deprecated. Format for displaying proposed changes. Recognized values: list, diff.
+     * @option source An arbitrary directory that holds the configuration files. An alternative to label argument
+     * @option partial Allows for partial config imports from the source directory. Only updates and new configs will be processed with this flag (missing configs will not be deleted). No config transformation happens.
+     * @aliases cim,config-import
+     * @topics docs:deploy
+     * @bootstrap full
+     *
+     * @throws \Drupal\Core\Config\StorageTransformerException
+     * @throws \Drush\Exceptions\UserAbortException
      */
     public function import($label = null, $options = ['preview' => 'list', 'source' => self::REQ, 'partial' => false, 'diff' => false])
     {
@@ -342,6 +359,32 @@ class ConfigImportCommands extends DrushCommands
                 watchdog_exception('config_import', $e);
                 throw new \Exception($message);
             }
+        }
+    }
+
+    /**
+     * @hook validate config:import
+     * @param \Consolidation\AnnotatedCommand\CommandData $commandData
+     * @return \Consolidation\AnnotatedCommand\CommandError|null
+     */
+    public function validate(CommandData $commandData)
+    {
+        $msgs = [];
+        if ($commandData->input()->getOption('partial') && !\Drupal::moduleHandler()->moduleExists('config')) {
+            $msgs[] = 'Enable the config module in order to use the --partial option.';
+        }
+
+        if ($source = $commandData->input()->getOption('source')) {
+            if (!file_exists($source)) {
+                $msgs[] = 'The source directory does not exist.';
+            }
+            if (!is_dir($source)) {
+                $msgs[] = 'The source is not a directory.';
+            }
+        }
+
+        if ($msgs) {
+            return new CommandError(implode(' ', $msgs));
         }
     }
 }

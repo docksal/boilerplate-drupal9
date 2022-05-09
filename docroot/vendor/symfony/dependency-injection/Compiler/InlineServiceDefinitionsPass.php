@@ -30,6 +30,7 @@ class InlineServiceDefinitionsPass extends AbstractRecursivePass implements Repe
     private $connectedIds = [];
     private $notInlinedIds = [];
     private $inlinedIds = [];
+    private $notInlinableIds = [];
     private $graph;
 
     public function __construct(AnalyzeServiceReferencesPass $analyzingPass = null)
@@ -42,7 +43,7 @@ class InlineServiceDefinitionsPass extends AbstractRecursivePass implements Repe
      */
     public function setRepeatedPass(RepeatedPass $repeatedPass)
     {
-        @trigger_error(sprintf('The "%s()" method is deprecated since Symfony 4.2.', __METHOD__), E_USER_DEPRECATED);
+        @trigger_error(sprintf('The "%s()" method is deprecated since Symfony 4.2.', __METHOD__), \E_USER_DEPRECATED);
         $this->repeatedPass = $repeatedPass;
     }
 
@@ -99,6 +100,10 @@ class InlineServiceDefinitionsPass extends AbstractRecursivePass implements Repe
             }
 
             foreach ($remainingInlinedIds as $id) {
+                if (isset($this->notInlinableIds[$id])) {
+                    continue;
+                }
+
                 $definition = $container->getDefinition($id);
 
                 if (!$definition->isShared() && !$definition->isPublic()) {
@@ -108,6 +113,7 @@ class InlineServiceDefinitionsPass extends AbstractRecursivePass implements Repe
         } finally {
             $this->container = null;
             $this->connectedIds = $this->notInlinedIds = $this->inlinedIds = [];
+            $this->notInlinableIds = [];
             $this->graph = null;
         }
     }
@@ -118,7 +124,7 @@ class InlineServiceDefinitionsPass extends AbstractRecursivePass implements Repe
     protected function processValue($value, $isRoot = false)
     {
         if ($value instanceof ArgumentInterface) {
-            // Reference found in ArgumentInterface::getValues() are not inlineable
+            // References found in ArgumentInterface::getValues() are not inlineable
             return $value;
         }
 
@@ -138,6 +144,8 @@ class InlineServiceDefinitionsPass extends AbstractRecursivePass implements Repe
         $definition = $this->container->getDefinition($id);
 
         if (!$this->isInlineableDefinition($id, $definition)) {
+            $this->notInlinableIds[$id] = true;
+
             return $value;
         }
 
@@ -182,7 +190,7 @@ class InlineServiceDefinitionsPass extends AbstractRecursivePass implements Repe
                 $srcId = $edge->getSourceNode()->getId();
                 $this->connectedIds[$srcId] = true;
                 if ($edge->isWeak() || $edge->isLazy()) {
-                    return false;
+                    return !$this->connectedIds[$id] = true;
                 }
             }
 
@@ -204,9 +212,7 @@ class InlineServiceDefinitionsPass extends AbstractRecursivePass implements Repe
 
         $srcIds = [];
         $srcCount = 0;
-        $isReferencedByConstructor = false;
         foreach ($this->graph->getNode($id)->getInEdges() as $edge) {
-            $isReferencedByConstructor = $isReferencedByConstructor || $edge->isReferencedByConstructor();
             $srcId = $edge->getSourceNode()->getId();
             $this->connectedIds[$srcId] = true;
             if ($edge->isWeak() || $edge->isLazy()) {

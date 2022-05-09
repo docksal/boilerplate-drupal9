@@ -40,7 +40,7 @@ class SerializationTest extends KernelTestBase {
     $expected = 'Normalized by SerializationTestNormalizer, Encoded by SerializationTestEncoder';
 
     // Ensure the serialization invokes the expected normalizer and encoder.
-    $this->assertIdentical($this->serializer->serialize($object, $format), $expected);
+    $this->assertSame($expected, $this->serializer->serialize($object, $format));
 
     // Ensure the serialization fails for an unsupported format.
     try {
@@ -48,7 +48,7 @@ class SerializationTest extends KernelTestBase {
       $this->fail('The serializer was expected to throw an exception for an unsupported format, but did not.');
     }
     catch (UnexpectedValueException $e) {
-      $this->pass('The serializer threw an exception for an unsupported format.');
+      // Expected exception; just continue testing.
     }
   }
 

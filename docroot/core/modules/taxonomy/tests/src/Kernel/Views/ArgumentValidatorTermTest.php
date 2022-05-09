@@ -8,8 +8,6 @@ use Drupal\views\Views;
  * Tests the plugin of the taxonomy: term argument validator.
  *
  * @group taxonomy
- *
- * @see \Drupal\taxonomy\Plugin\views\argument_validator\Term
  */
 class ArgumentValidatorTermTest extends TaxonomyTestBase {
 
@@ -71,7 +69,7 @@ class ArgumentValidatorTermTest extends TaxonomyTestBase {
       $view->argument['tid']->argument_validated = NULL;
     }
 
-    // Pass in a invalid term.
+    // Pass in an invalid term.
     $this->assertFalse($view->argument['tid']->setArgument(rand(1000, 10000)));
     $this->assertEmpty($view->argument['tid']->getTitle());
     $view->argument['tid']->validated_title = NULL;

@@ -12,7 +12,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FormatterBase;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -31,7 +30,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   }
  * )
  */
-class CommentDefaultFormatter extends FormatterBase implements ContainerFactoryPluginInterface {
+class CommentDefaultFormatter extends FormatterBase {
 
   /**
    * {@inheritdoc}
@@ -252,7 +251,7 @@ class CommentDefaultFormatter extends FormatterBase implements ContainerFactoryP
   public function settingsSummary() {
     $view_mode = $this->getSetting('view_mode');
     $view_modes = $this->getViewModes();
-    $view_mode_label = isset($view_modes[$view_mode]) ? $view_modes[$view_mode] : 'default';
+    $view_mode_label = $view_modes[$view_mode] ?? 'default';
     $summary = [$this->t('Comment view mode: @mode', ['@mode' => $view_mode_label])];
     if ($pager_id = $this->getSetting('pager_id')) {
       $summary[] = $this->t('Pager ID: @id', ['@id' => $pager_id]);

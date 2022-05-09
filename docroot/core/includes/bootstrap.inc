@@ -6,14 +6,17 @@
  */
 
 use Drupal\Component\Utility\Crypt;
+use Drupal\Core\Http\InputBag;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Test\TestDatabase;
 use Drupal\Core\Utility\Error;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\InputBag as SymfonyInputBag;
 
 /**
- * Minimum allowed version of PHP.
+ * Minimum allowed version of PHP for Drupal to be bootstrapped.
  *
  * Below this version:
  * - The installer cannot be run.
@@ -22,12 +25,13 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * - If a site managed to bypass all of the above, then an error is shown in
  *   the status report and various fatal errors occur on various pages.
  *
- * @see install.php
+ * @deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. Use
+ *   \Drupal::MINIMUM_PHP instead.
  *
- * @todo Move this to an appropriate autoloadable class. See
- *   https://www.drupal.org/project/drupal/issues/2908079
+ * @see https://www.drupal.org/node/2909361
+ * @see install.php
  */
-const DRUPAL_MINIMUM_PHP = '7.3.0';
+const DRUPAL_MINIMUM_PHP = \Drupal::MINIMUM_PHP;
 
 /**
  * Minimum supported version of PHP.
@@ -38,10 +42,12 @@ const DRUPAL_MINIMUM_PHP = '7.3.0';
  *   that Drupal no longer supports that PHP version.
  * - An error is shown in the status report that the PHP version is too old.
  *
- * @todo Move this to an appropriate autoloadable class. See
- *   https://www.drupal.org/project/drupal/issues/2908079
+ * @deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. Use
+ *   \Drupal::MINIMUM_SUPPORTED_PHP instead.
+ *
+ * @see https://www.drupal.org/node/2909361
  */
-const DRUPAL_MINIMUM_SUPPORTED_PHP = '7.3.0';
+const DRUPAL_MINIMUM_SUPPORTED_PHP = \Drupal::MINIMUM_SUPPORTED_PHP;
 
 /**
  * Minimum recommended version of PHP.
@@ -50,10 +56,12 @@ const DRUPAL_MINIMUM_SUPPORTED_PHP = '7.3.0';
  * message, but Drupal can still be installed. Used for (e.g.) PHP versions
  * that have reached their EOL or will in the near future.
  *
- * @todo Move this to an appropriate autoloadable class. See
- *   https://www.drupal.org/project/drupal/issues/2908079
+ * @deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. Use
+ *   \Drupal::RECOMMENDED_PHP instead.
+ *
+ * @see https://www.drupal.org/node/2909361
  */
-const DRUPAL_RECOMMENDED_PHP = '7.3';
+const DRUPAL_RECOMMENDED_PHP = \Drupal::RECOMMENDED_PHP;
 
 /**
  * Minimum recommended value of PHP memory_limit.
@@ -62,10 +70,12 @@ const DRUPAL_RECOMMENDED_PHP = '7.3';
  * contributed modules to be installed prior to hitting the limit. However,
  * 40M is the target for the Standard installation profile.
  *
- * @todo Move this to an appropriate autoloadable class. See
- *   https://www.drupal.org/project/drupal/issues/2908079
+ * @deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. Use
+ *   \Drupal::MINIMUM_PHP_MEMORY_LIMIT instead.
+ *
+ * @see https://www.drupal.org/node/2909361
  */
-const DRUPAL_MINIMUM_PHP_MEMORY_LIMIT = '64M';
+const DRUPAL_MINIMUM_PHP_MEMORY_LIMIT = \Drupal::MINIMUM_PHP_MEMORY_LIMIT;
 
 /**
  * Error reporting level: display no errors.
@@ -117,6 +127,30 @@ define('REQUEST_TIME', (int) $_SERVER['REQUEST_TIME']);
 define('DRUPAL_ROOT', dirname(__DIR__, 2));
 
 /**
+ * Declare class aliases that will be added by the autoloader.
+ */
+// @todo https://www.drupal.org/project/drupal/issues/3197482 Remove this class
+//   alias once Drupal is running Symfony 5.3 or higher.
+class_alias('Drupal\Core\Http\KernelEvent', 'Symfony\Component\HttpKernel\Event\KernelEvent', TRUE);
+
+/**
+ * Set up the Symfony Request factory for forward compatibility with Symfony 5.
+ *
+ * @todo Remove this when Symfony 4 is no longer supported.
+ */
+Request::setFactory(
+  function ($query, $request, $attributes, $cookies, $files, $server, $content) {
+    $request = new Request($query, $request, $attributes, $cookies, $files, $server, $content);
+    foreach (['request', 'query', 'cookies'] as $bag) {
+      if (!($bag instanceof SymfonyInputBag)) {
+        $request->$bag = new InputBag($request->$bag->all());
+      }
+    }
+    return $request;
+  }
+);
+
+/**
  * Returns and optionally sets the filename for a system resource.
  *
  * The filename, whether provided, cached, or retrieved from the database, is
@@ -146,12 +180,19 @@ define('DRUPAL_ROOT', dirname(__DIR__, 2));
  *
  * @return string
  *   The filename of the requested item or NULL if the item is not found.
+ *
+ * @deprecated in drupal:9.3.0 and is removed from drupal:10.0.0. Use
+ *   \Drupal\Core\Extension\ExtensionPathResolver::getPathname() instead.
+ *
+ * @see https://www.drupal.org/node/2940438
  */
 function drupal_get_filename($type, $name, $filename = NULL) {
+  @trigger_error('drupal_get_filename() is deprecated in drupal:9.3.0 and is removed from drupal:10.0.0. Use \Drupal\Core\Extension\ExtensionPathResolver::getPathname() instead. See https://www.drupal.org/node/2940438', E_USER_DEPRECATED);
   // Type 'core' only exists to simplify application-level logic; it always maps
   // to the /core directory, whereas $name is ignored. It is only requested via
-  // drupal_get_path(). /core/core.info.yml does not exist, but is required
-  // since drupal_get_path() returns the dirname() of the returned pathname.
+  // \Drupal\Core\Extension\ExtensionList::getPath(). The file
+  // /core/core.info.yml does not exist, but is required since
+  // ExtensionList::getPath() returns the dirname() of the returned pathname.
   if ($type === 'core') {
     return 'core/core.info.yml';
   }
@@ -195,8 +236,15 @@ function drupal_get_filename($type, $name, $filename = NULL) {
  *
  * @return string
  *   The path to the requested item or an empty string if the item is not found.
+ *
+ * @deprecated in drupal:9.3.0 and is removed from drupal:10.0.0. Use
+ *   \Drupal\Core\Extension\ExtensionPathResolver::getPath() instead.
+ *
+ * @see https://www.drupal.org/node/2940438
+ * @see \Drupal\Core\Extension\ExtensionList::getPath()
  */
 function drupal_get_path($type, $name) {
+  @trigger_error('drupal_get_path() is deprecated in drupal:9.3.0 and is removed from drupal:10.0.0. Use \Drupal\Core\Extension\ExtensionPathResolver::getPath() instead. See https://www.drupal.org/node/2940438', E_USER_DEPRECATED);
   return dirname(drupal_get_filename($type, $name));
 }
 
@@ -292,13 +340,10 @@ function watchdog_exception($type, Exception $exception, $message = NULL, $varia
  *   (optional) The filename that the error was raised in.
  * @param $line
  *   (optional) The line number the error was raised at.
- * @param $context
- *   (optional) An array that points to the active symbol table at the point the
- *   error occurred.
  */
-function _drupal_error_handler($error_level, $message, $filename = NULL, $line = NULL, $context = NULL) {
+function _drupal_error_handler($error_level, $message, $filename = NULL, $line = NULL) {
   require_once __DIR__ . '/errors.inc';
-  _drupal_error_handler_real($error_level, $message, $filename, $line, $context);
+  _drupal_error_handler_real($error_level, $message, $filename, $line);
 }
 
 /**
@@ -370,10 +415,10 @@ function drupal_valid_test_ua($new_prefix = NULL) {
   // A valid Simpletest request will contain a hashed and salted authentication
   // code. Check if this code is present in a cookie or custom user agent
   // string.
-  $http_user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : NULL;
-  $user_agent = isset($_COOKIE['SIMPLETEST_USER_AGENT']) ? $_COOKIE['SIMPLETEST_USER_AGENT'] : $http_user_agent;
+  $http_user_agent = $_SERVER['HTTP_USER_AGENT'] ?? NULL;
+  $user_agent = $_COOKIE['SIMPLETEST_USER_AGENT'] ?? $http_user_agent;
   if (isset($user_agent) && preg_match("/^simple(\w+\d+):(.+):(.+):(.+)$/", $user_agent, $matches)) {
-    list(, $prefix, $time, $salt, $hmac) = $matches;
+    [, $prefix, $time, $salt, $hmac] = $matches;
     $check_string = $prefix . ':' . $time . ':' . $salt;
     // Read the hash salt prepared by drupal_generate_test_ua().
     // This function is called before settings.php is read and Drupal's error
@@ -382,11 +427,17 @@ function drupal_valid_test_ua($new_prefix = NULL) {
     // Ensure that no information leaks on production sites.
     $test_db = new TestDatabase($prefix);
     $key_file = DRUPAL_ROOT . '/' . $test_db->getTestSitePath() . '/.htkey';
-    if (!is_readable($key_file)) {
+    if (!is_readable($key_file) || is_dir($key_file)) {
       header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
       exit;
     }
     $private_key = file_get_contents($key_file);
+    // The string from drupal_generate_test_ua() is 74 bytes long. If we don't
+    // have it, tests cannot be allowed.
+    if (empty($private_key) || strlen($private_key) < 74) {
+      header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
+      exit;
+    }
     // The file properties add more entropy not easily accessible to others.
     $key = $private_key . filectime(__FILE__) . fileinode(__FILE__);
     $time_diff = REQUEST_TIME - $time;
@@ -608,6 +659,23 @@ function &drupal_static($name, $default_value = NULL, $reset = FALSE) {
  *   unit tests with a clean environment.
  */
 function drupal_static_reset($name = NULL) {
+  switch ($name) {
+    case 'taxonomy_vocabulary_get_names':
+      @trigger_error("Calling drupal_static_reset() with 'taxonomy_vocabulary_get_names' as argument is deprecated in drupal:9.3.0 and is removed from drupal:10.0.0. There is no replacement for this usage. See https://www.drupal.org/node/3039041", E_USER_DEPRECATED);
+      break;
+
+    case 'node_mark':
+      @trigger_error("Calling drupal_static_reset() with 'node_mark' as argument is deprecated in drupal:9.3.0 and is removed from drupal:10.0.0. There is no replacement for this usage. See https://www.drupal.org/node/3037203", E_USER_DEPRECATED);
+      break;
+
+    case 'Drupal\book\BookManager::bookSubtreeData':
+    case 'Drupal\book\BookManager::bookTreeAllData':
+    case 'Drupal\book\BookManager::doBookTreeBuild':
+      @trigger_error("Calling drupal_static_reset() with '{$name}' as argument is deprecated in drupal:9.3.0 and is removed in drupal:10.0.0. Use \Drupal::service('book.memory_cache')->deleteAll() instead. See https://www.drupal.org/node/3039439", E_USER_DEPRECATED);
+      \Drupal::service('book.memory_cache')->deleteAll();
+      break;
+
+  }
   drupal_static($name, NULL, TRUE);
 }
 

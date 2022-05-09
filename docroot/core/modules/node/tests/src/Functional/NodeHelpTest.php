@@ -54,7 +54,7 @@ class NodeHelpTest extends BrowserTestBase {
     $this->drupalPlaceBlock('help_block');
 
     $this->testType = 'type';
-    $this->testText = t('Help text to find on node forms.');
+    $this->testText = 'Help text to find on node forms.';
 
     // Create content type.
     $this->drupalCreateContentType([
@@ -70,13 +70,13 @@ class NodeHelpTest extends BrowserTestBase {
     // Check the node add form.
     $this->drupalGet('node/add/' . $this->testType);
     $this->assertSession()->statusCodeEquals(200);
-    $this->assertText($this->testText);
+    $this->assertSession()->pageTextContains($this->testText);
 
     // Create node and check the node edit form.
     $node = $this->drupalCreateNode(['type' => $this->testType]);
     $this->drupalGet('node/' . $node->id() . '/edit');
     $this->assertSession()->statusCodeEquals(200);
-    $this->assertText($this->testText);
+    $this->assertSession()->pageTextContains($this->testText);
   }
 
 }

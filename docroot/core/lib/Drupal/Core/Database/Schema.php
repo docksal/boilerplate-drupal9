@@ -72,13 +72,13 @@ abstract class Schema implements PlaceholderInterface {
   /**
    * Get information about the table name and schema from the prefix.
    *
-   * @param
+   * @param string $table
    *   Name of table to look prefix up for. Defaults to 'default' because that's
    *   default key for prefix.
-   * @param $add_prefix
+   * @param bool $add_prefix
    *   Boolean that indicates whether the given table name should be prefixed.
    *
-   * @return
+   * @return array
    *   A keyed array with information about the schema, table name and prefix.
    */
   protected function getPrefixInfo($table = 'default', $add_prefix = TRUE) {
@@ -200,7 +200,7 @@ abstract class Schema implements PlaceholderInterface {
     // couldn't use \Drupal::database()->select() here because it would prefix
     // information_schema.tables and the query would fail.
     // Don't use {} around information_schema.tables table.
-    $results = $this->connection->query("SELECT table_name as table_name FROM information_schema.tables WHERE " . (string) $condition, $condition->arguments());
+    $results = $this->connection->query("SELECT table_name AS table_name FROM information_schema.tables WHERE " . (string) $condition, $condition->arguments());
     foreach ($results as $table) {
       // Take into account tables that have an individual prefix.
       if (isset($individually_prefixed_tables[$table->table_name])) {
@@ -238,9 +238,9 @@ abstract class Schema implements PlaceholderInterface {
   /**
    * Check if a column exists in the given table.
    *
-   * @param $table
+   * @param string $table
    *   The name of the table in drupal (no prefixing).
-   * @param $column
+   * @param string $column
    *   The name of the column.
    *
    * @return

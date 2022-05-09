@@ -64,7 +64,12 @@ class DbLogResourceTest extends ResourceTestBase {
     // Write a log message to the DB.
     $this->container->get('logger.channel.rest')->notice('Test message');
     // Get the ID of the written message.
-    $id = Database::getConnection()->queryRange("SELECT wid FROM {watchdog} WHERE type = :type ORDER BY wid DESC", 0, 1, [':type' => 'rest'])
+    $id = Database::getConnection()->select('watchdog', 'w')
+      ->fields('w', ['wid'])
+      ->condition('type', 'rest')
+      ->orderBy('wid', 'DESC')
+      ->range(0, 1)
+      ->execute()
       ->fetchField();
 
     $this->initAuthentication();
@@ -81,9 +86,9 @@ class DbLogResourceTest extends ResourceTestBase {
     $response = $this->request('GET', $url, $request_options);
     $this->assertResourceResponse(200, FALSE, $response, ['config:rest.resource.dblog', 'http_response'], ['user.permissions'], FALSE, 'MISS');
     $log = Json::decode((string) $response->getBody());
-    $this->assertEqual($log['wid'], $id, 'Log ID is correct.');
-    $this->assertEqual($log['type'], 'rest', 'Type of log message is correct.');
-    $this->assertEqual($log['message'], 'Test message', 'Log message text is correct.');
+    $this->assertEquals($id, $log['wid'], 'Log ID is correct.');
+    $this->assertEquals('rest', $log['type'], 'Type of log message is correct.');
+    $this->assertEquals('Test message', $log['message'], 'Log message text is correct.');
 
     // Request an unknown log entry.
     $url->setRouteParameter('id', 9999);
@@ -113,17 +118,12 @@ class DbLogResourceTest extends ResourceTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function assertNormalizationEdgeCases($method, Url $url, array $request_options) {}
+  protected function assertNormalizationEdgeCases($method, Url $url, array $request_options): void {}
 
   /**
    * {@inheritdoc}
    */
   protected function getExpectedUnauthorizedAccessMessage($method) {}
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function getExpectedBcUnauthorizedAccessMessage($method) {}
 
   /**
    * {@inheritdoc}

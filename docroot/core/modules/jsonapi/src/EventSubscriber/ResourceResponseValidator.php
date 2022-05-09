@@ -20,7 +20,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * @internal JSON:API maintains no PHP API. The API is the HTTP API. This class
  *   may change at any time and could break any dependencies on it.
  *
- * @see https://www.drupal.org/project/jsonapi/issues/3032787
+ * @see https://www.drupal.org/project/drupal/issues/3032787
  * @see jsonapi.api.php
  *
  * @see \Drupal\rest\EventSubscriber\ResourceResponseSubscriber
@@ -101,7 +101,7 @@ class ResourceResponseValidator implements EventSubscriberInterface {
    */
   public function onResponse(ResponseEvent $event) {
     $response = $event->getResponse();
-    if (strpos($response->headers->get('Content-Type'), 'application/vnd.api+json') === FALSE) {
+    if (strpos($response->headers->get('Content-Type', ''), 'application/vnd.api+json') === FALSE) {
       return;
     }
 

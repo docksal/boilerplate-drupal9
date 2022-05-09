@@ -31,8 +31,8 @@ class InstallTest extends BrowserTestBase {
    */
   public function testGetSchemaAtInstallTime() {
     // @see module_test_install()
-    $value = Database::getConnection()->query("SELECT data FROM {module_test}")->fetchField();
-    $this->assertIdentical($value, 'varchar');
+    $value = Database::getConnection()->select('module_test', 'mt')->fields('mt', ['data'])->execute()->fetchField();
+    $this->assertSame('varchar', $value);
   }
 
   /**
@@ -44,17 +44,19 @@ class InstallTest extends BrowserTestBase {
    */
   public function testEnableUserTwice() {
     \Drupal::service('module_installer')->install(['user'], FALSE);
-    $this->assertIdentical($this->config('core.extension')->get('module.user'), 0);
+    $this->assertSame(0, $this->config('core.extension')->get('module.user'));
   }
 
   /**
    * Tests recorded schema versions of early installed modules in the installer.
    */
   public function testRequiredModuleSchemaVersions() {
-    $version = drupal_get_installed_schema_version('system', TRUE);
-    $this->assertTrue($version > 0, 'System module version is > 0.');
-    $version = drupal_get_installed_schema_version('user', TRUE);
-    $this->assertTrue($version > 0, 'User module version is > 0.');
+    /** @var \Drupal\Core\Update\UpdateHookRegistry $update_registry */
+    $update_registry = \Drupal::service('update.update_hook_registry');
+    $version = $update_registry->getInstalledVersion('system');
+    $this->assertGreaterThan(0, $version);
+    $version = $update_registry->getInstalledVersion('user');
+    $this->assertGreaterThan(0, $version);
 
     $post_update_key_value = \Drupal::keyValue('post_update');
     $existing_updates = $post_update_key_value->get('existing_updates', []);
@@ -82,8 +84,8 @@ class InstallTest extends BrowserTestBase {
       $this->container->get('module_installer')->install([$module_name]);
       $this->fail($message);
     }
-    catch (ExtensionNameLengthException $e) {
-      $this->pass($message);
+    catch (\Exception $e) {
+      $this->assertInstanceOf(ExtensionNameLengthException::class, $e);
     }
 
     // Since for the UI, the submit callback uses FALSE, test that too.
@@ -92,8 +94,8 @@ class InstallTest extends BrowserTestBase {
       $this->container->get('module_installer')->install([$module_name], FALSE);
       $this->fail($message);
     }
-    catch (ExtensionNameLengthException $e) {
-      $this->pass($message);
+    catch (\Exception $e) {
+      $this->assertInstanceOf(ExtensionNameLengthException::class, $e);
     }
   }
 

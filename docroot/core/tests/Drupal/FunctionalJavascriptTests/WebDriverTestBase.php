@@ -4,16 +4,24 @@ namespace Drupal\FunctionalJavascriptTests;
 
 use Behat\Mink\Exception\DriverException;
 use Drupal\Tests\BrowserTestBase;
+use PHPUnit\Runner\BaseTestRunner;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Runs a browser test using a driver that supports Javascript.
+ * Runs a browser test using a driver that supports JavaScript.
  *
  * Base class for testing browser interaction implemented in JavaScript.
  *
  * @ingroup testing
  */
 abstract class WebDriverTestBase extends BrowserTestBase {
+
+  /**
+   * Determines if a test should fail on JavaScript console errors.
+   *
+   * @var bool
+   */
+  protected $failOnJavascriptConsoleErrors = TRUE;
 
   /**
    * Disables CSS animations in tests for more reliable testing.
@@ -59,7 +67,10 @@ abstract class WebDriverTestBase extends BrowserTestBase {
    * {@inheritdoc}
    */
   protected function installModulesFromClassProperty(ContainerInterface $container) {
-    self::$modules = ['js_deprecation_log_test'];
+    self::$modules = [
+      'js_testing_log_test',
+      'jquery_keyevent_polyfill_test',
+    ];
     if ($this->disableCssAnimations) {
       self::$modules[] = 'css_disable_transitions_test';
     }
@@ -81,6 +92,11 @@ abstract class WebDriverTestBase extends BrowserTestBase {
    */
   protected function tearDown() {
     if ($this->mink) {
+      $status = $this->getStatus();
+      if ($status === BaseTestRunner::STATUS_ERROR || $status === BaseTestRunner::STATUS_WARNING || $status === BaseTestRunner::STATUS_FAILURE) {
+        // Ensure we capture the output at point of failure.
+        @$this->htmlOutput();
+      }
       // Wait for all requests to finish. It is possible that an AJAX request is
       // still on-going.
       $result = $this->getSession()->wait(5000, '(typeof(jQuery)=="undefined" || (0 === jQuery.active && 0 === jQuery(\':animated\').length))');
@@ -93,19 +109,27 @@ abstract class WebDriverTestBase extends BrowserTestBase {
         throw new \RuntimeException('Unfinished AJAX requests while tearing down a test');
       }
 
-      $warnings = $this->getSession()->evaluateScript("JSON.parse(sessionStorage.getItem('js_deprecation_log_test.warnings') || JSON.stringify([]))");
+      $warnings = $this->getSession()->evaluateScript("JSON.parse(sessionStorage.getItem('js_testing_log_test.warnings') || JSON.stringify([]))");
       foreach ($warnings as $warning) {
         if (strpos($warning, '[Deprecation]') === 0) {
           @trigger_error('Javascript Deprecation:' . substr($warning, 13), E_USER_DEPRECATED);
         }
       }
+      if ($this->failOnJavascriptConsoleErrors) {
+        $errors = $this->getSession()->evaluateScript("JSON.parse(sessionStorage.getItem('js_testing_log_test.errors') || JSON.stringify([]))");
+        if (!empty($errors)) {
+          $all_errors = implode("\n", $errors);
+          @trigger_error("Not failing JavaScript test for JavaScript errors is deprecated in drupal:9.3.0 and is removed from drupal:10.0.0. This test had the following JavaScript errors: $all_errors. See https://www.drupal.org/node/3221100", E_USER_DEPRECATED);
+        }
+      }
+
     }
     parent::tearDown();
   }
 
   /**
-    * {@inheritdoc}
-    */
+   * {@inheritdoc}
+   */
   protected function getMinkDriverArgs() {
     if ($this->minkDefaultDriverClass === DrupalSelenium2Driver::class) {
       return getenv('MINK_DRIVER_ARGS_WEBDRIVER') ?: parent::getMinkDriverArgs();
@@ -129,7 +153,7 @@ abstract class WebDriverTestBase extends BrowserTestBase {
    * @see \Behat\Mink\Driver\DriverInterface::evaluateScript()
    */
   protected function assertJsCondition($condition, $timeout = 10000, $message = '') {
-    $message = $message ?: "Javascript condition met:\n" . $condition;
+    $message = $message ?: "JavaScript condition met:\n" . $condition;
     $result = $this->getSession()->getDriver()->wait($timeout, $condition);
     $this->assertTrue($result, $message);
   }
@@ -138,7 +162,7 @@ abstract class WebDriverTestBase extends BrowserTestBase {
    * Creates a screenshot.
    *
    * @param string $filename
-   *   The file name of the resulting screenshot including a writeable path. For
+   *   The file name of the resulting screenshot including a writable path. For
    *   example, /tmp/test_screenshot.jpg.
    * @param bool $set_background_color
    *   (optional) By default this method will set the background color to white.

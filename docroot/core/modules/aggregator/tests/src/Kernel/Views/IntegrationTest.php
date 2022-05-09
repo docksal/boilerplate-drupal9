@@ -58,10 +58,11 @@ class IntegrationTest extends ViewsKernelTestBase {
   protected function setUp($import_test_views = TRUE): void {
     parent::setUp();
 
+    $this->installConfig(['aggregator']);
     $this->installEntitySchema('aggregator_item');
     $this->installEntitySchema('aggregator_feed');
 
-    ViewTestData::createTestViews(get_class($this), ['aggregator_test_views']);
+    ViewTestData::createTestViews(static::class, ['aggregator_test_views']);
 
     $this->itemStorage = $this->container->get('entity_type.manager')->getStorage('aggregator_item');
     $this->feedStorage = $this->container->get('entity_type.manager')->getStorage('aggregator_feed');
@@ -91,7 +92,7 @@ class IntegrationTest extends ViewsKernelTestBase {
       $values['timestamp'] = mt_rand(REQUEST_TIME - 10, REQUEST_TIME + 10);
       $values['title'] = $this->randomMachineName();
       $values['description'] = $this->randomMachineName();
-      // Add a image to ensure that the sanitizing can be tested below.
+      // Add an image to ensure that the sanitizing can be tested below.
       $values['author'] = $this->randomMachineName() . '<img src="http://example.com/example.png" \>"';
       $values['link'] = 'https://www.drupal.org/node/' . mt_rand(1000, 10000);
       $values['guid'] = $this->randomString();
@@ -123,19 +124,19 @@ class IntegrationTest extends ViewsKernelTestBase {
       $output = $renderer->executeInRenderContext(new RenderContext(), function () use ($view, $row) {
         return $view->field['title']->advancedRender($row);
       });
-      $this->assertEqual($output, $expected_link->getGeneratedLink(), 'Ensure the right link is generated');
+      $this->assertEquals($expected_link->getGeneratedLink(), $output, 'Ensure the right link is generated');
 
       $expected_author = Xss::filter($items[$iid]->getAuthor(), _aggregator_allowed_tags());
       $output = $renderer->executeInRenderContext(new RenderContext(), function () use ($view, $row) {
         return $view->field['author']->advancedRender($row);
       });
-      $this->assertEqual($output, $expected_author, 'Ensure the author got filtered');
+      $this->assertEquals($expected_author, $output, 'Ensure the author got filtered');
 
       $expected_description = Xss::filter($items[$iid]->getDescription(), _aggregator_allowed_tags());
       $output = $renderer->executeInRenderContext(new RenderContext(), function () use ($view, $row) {
         return $view->field['description']->advancedRender($row);
       });
-      $this->assertEqual($output, $expected_description, 'Ensure the author got filtered');
+      $this->assertEquals($expected_description, $output, 'Ensure the author got filtered');
     }
   }
 

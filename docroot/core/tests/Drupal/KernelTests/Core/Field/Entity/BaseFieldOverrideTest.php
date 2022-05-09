@@ -59,7 +59,7 @@ class BaseFieldOverrideTest extends KernelTestBase {
         FALSE,
         FieldItemList::class,
       ],
-      'String (overriden class)' => [
+      'String (overridden class)' => [
         'string',
         static::class,
         static::class,
@@ -68,7 +68,7 @@ class BaseFieldOverrideTest extends KernelTestBase {
   }
 
   /**
-   * Test the default value callback.
+   * Tests the default value callback.
    */
   public function testDefaultValueCallback() {
     $base_field = BaseFieldDefinition::create('entity_reference')

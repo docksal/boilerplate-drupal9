@@ -114,7 +114,7 @@ drupal.nav-tabs:
   dependencies:
     - core/jquery
     - core/drupal
-    - core/jquery.once
+    - core/once
     - core/drupal.debounce
     - core/collapse
 
@@ -124,7 +124,7 @@ drupal.responsive-detail:
     js/responsive-details.js: {}
   dependencies:
     - core/jquery
-    - core/jquery.once
+    - core/once
     - core/collapse
 
 claro.jquery.ui:
@@ -138,6 +138,17 @@ claro.drupal.dialog:
   css:
     theme:
       css/components/dialog.css: {}
+
+claro.tabledrag:
+  version: VERSION
+  js:
+    js/tabledrag.js: {}
+
+ckeditor-admin:
+  version: VERSION
+  css:
+    theme:
+      css/theme/ckeditor.admin.css: {}
 
 ckeditor-dialog:
   version: VERSION
@@ -155,7 +166,7 @@ tour-styling:
   version: VERSION
   css:
     theme:
-      css/components/tour.theme.css: {}
+      css/theme/tour.theme.css: {}
 
 media-form:
   version: VERSION
@@ -186,6 +197,12 @@ checkbox:
   dependencies:
     - core/drupal
 
+icon-link:
+  version: VERSION
+  css:
+    component:
+      css/components/icon-link.css: {}
+
 dropbutton:
   version: VERSION
   js:
@@ -197,6 +214,8 @@ autocomplete:
   version: VERSION
   js:
     js/autocomplete.js: {}
+  dependencies:
+    - core/once
 
 drupal.shortcut:
   version: VERSION
@@ -219,11 +238,10 @@ form.password-confirm:
     component:
       css/components/form--password-confirm.css: {}
   js:
-    js/user.js: {}
+    js/user.theme.js: {}
   dependencies:
-    - core/jquery
+    - core/drupal.object.assign
     - core/drupal
-    - core/jquery.once
     - claro/global-styling
 
 views:
@@ -258,6 +276,20 @@ media_library.theme:
   css:
     theme:
       css/theme/media-library.css: {}
+  dependencies:
+    - claro/icon-link
+
+media_library.ui:
+  version: VERSION
+  css:
+    component:
+      css/components/media-library.ui.css : {}
+  js:
+    js/media-library.ui.js: { weight: -1 }
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/once
 
 progress:
   version: VERSION

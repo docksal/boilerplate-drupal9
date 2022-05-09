@@ -3,13 +3,15 @@
 namespace Drupal\Core\Database\Driver\mysql;
 
 use Drupal\Core\Database\DatabaseAccessDeniedException;
+use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
-
+use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Database\StatementWrapper;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Database\Connection as DatabaseConnection;
-use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Database\TransactionNoActiveException;
 
 /**
  * @addtogroup database
@@ -47,11 +49,30 @@ class Connection extends DatabaseConnection {
   const SQLSTATE_SYNTAX_ERROR = 42000;
 
   /**
+   * {@inheritdoc}
+   */
+  protected $statementClass = NULL;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $statementWrapperClass = StatementWrapper::class;
+
+  /**
    * Flag to indicate if the cleanup function in __destruct() should run.
    *
    * @var bool
    */
   protected $needsCleanup = FALSE;
+
+  /**
+   * Stores the server version after it has been retrieved from the database.
+   *
+   * @var string
+   *
+   * @see \Drupal\Core\Database\Driver\mysql\Connection::version
+   */
+  private $serverVersion;
 
   /**
    * The minimal possible value for the max_allowed_packet setting of MySQL.
@@ -69,37 +90,51 @@ class Connection extends DatabaseConnection {
   protected $identifierQuotes = ['"', '"'];
 
   /**
-   * Constructs a Connection object.
+   * {@inheritdoc}
    */
-  public function __construct(\PDO $connection, array $connection_options = []) {
+  public function __construct(\PDO $connection, array $connection_options) {
+    // If the SQL mode doesn't include 'ANSI_QUOTES' (explicitly or via a
+    // combination mode), then MySQL doesn't interpret a double quote as an
+    // identifier quote, in which case use the non-ANSI-standard backtick.
+    //
+    // Because we still support MySQL 5.7, check for the deprecated combination
+    // modes as well.
+    //
+    // @see https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html#sqlmode_ansi_quotes
+    $ansi_quotes_modes = ['ANSI_QUOTES', 'ANSI', 'DB2', 'MAXDB', 'MSSQL', 'ORACLE', 'POSTGRESQL'];
+    $is_ansi_quotes_mode = FALSE;
+    foreach ($ansi_quotes_modes as $mode) {
+      // None of the modes in $ansi_quotes_modes are substrings of other modes
+      // that are not in $ansi_quotes_modes, so a simple stripos() does not
+      // return false positives.
+      if (stripos($connection_options['init_commands']['sql_mode'], $mode) !== FALSE) {
+        $is_ansi_quotes_mode = TRUE;
+        break;
+      }
+    }
+    if ($this->identifierQuotes === ['"', '"'] && !$is_ansi_quotes_mode) {
+      $this->identifierQuotes = ['`', '`'];
+    }
     parent::__construct($connection, $connection_options);
-
-    // This driver defaults to transaction support, except if explicitly passed FALSE.
-    $this->transactionSupport = !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
-
-    // MySQL never supports transactional DDL.
-    $this->transactionalDDLSupport = FALSE;
-
-    $this->connectionOptions = $connection_options;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function query($query, array $args = [], $options = []) {
-    try {
-      return parent::query($query, $args, $options);
+  protected function handleQueryException(\PDOException $e, $query, array $args = [], $options = []) {
+    // In case of attempted INSERT of a record with an undefined column and no
+    // default value indicated in schema, MySql returns a 1364 error code.
+    // Throw an IntegrityConstraintViolationException here like the other
+    // drivers do, to avoid the parent class to throw a generic
+    // DatabaseExceptionWrapper instead.
+    if (!empty($e->errorInfo[1]) && $e->errorInfo[1] === 1364) {
+      @trigger_error('Connection::handleQueryException() is deprecated in drupal:9.2.0 and is removed in drupal:10.0.0. Get a handler through $this->exceptionHandler() instead, and use one of its methods. See https://www.drupal.org/node/3187222', E_USER_DEPRECATED);
+      $query_string = ($query instanceof StatementInterface) ? $query->getQueryString() : $query;
+      $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
+      throw new IntegrityConstraintViolationException($message, is_int($e->getCode()) ? $e->getCode() : 0, $e);
     }
-    catch (DatabaseException $e) {
-      if ($e->getPrevious()->errorInfo[1] == 1153) {
-        // If a max_allowed_packet error occurs the message length is truncated.
-        // This should prevent the error from recurring if the exception is
-        // logged to the database using dblog or the like.
-        $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
-        $e = new DatabaseExceptionWrapper($message, $e->getCode(), $e->getPrevious());
-      }
-      throw $e;
-    }
+
+    parent::handleQueryException($e, $query, $args, $options);
   }
 
   /**
@@ -144,6 +179,11 @@ class Connection extends DatabaseConnection {
       \PDO::ATTR_EMULATE_PREPARES => TRUE,
       // Limit SQL to a single statement like mysqli.
       \PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE,
+      // Convert numeric values to strings when fetching. In PHP 8.1,
+      // \PDO::ATTR_EMULATE_PREPARES now behaves the same way as non emulated
+      // prepares and returns integers. See https://externals.io/message/113294
+      // for further discussion.
+      \PDO::ATTR_STRINGIFY_FETCHES => TRUE,
     ];
 
     try {
@@ -182,15 +222,8 @@ class Connection extends DatabaseConnection {
       'init_commands' => [],
     ];
 
-    $sql_mode = 'ANSI,STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,ONLY_FULL_GROUP_BY';
-    // NO_AUTO_CREATE_USER is removed in MySQL 8.0.11
-    // https://dev.mysql.com/doc/relnotes/mysql/8.0/en/news-8-0-11.html#mysqld-8-0-11-deprecation-removal
-    $version_server = $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
-    if (version_compare($version_server, '8.0.11', '<')) {
-      $sql_mode .= ',NO_AUTO_CREATE_USER';
-    }
     $connection_options['init_commands'] += [
-      'sql_mode' => "SET sql_mode = '$sql_mode'",
+      'sql_mode' => "SET sql_mode = 'ANSI,TRADITIONAL'",
     ];
 
     // Execute initial commands.
@@ -204,30 +237,22 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  public function serialize() {
-    // Cleanup the connection, much like __destruct() does it as well.
-    if ($this->needsCleanup) {
-      $this->nextIdDelete();
-    }
-    $this->needsCleanup = FALSE;
-
-    return parent::serialize();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function __destruct() {
     if ($this->needsCleanup) {
       $this->nextIdDelete();
     }
+    parent::__destruct();
   }
 
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
     return $this->query($query . ' LIMIT ' . (int) $from . ', ' . (int) $count, $args, $options);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function queryTemporary($query, array $args = [], array $options = []) {
+    @trigger_error('Connection::queryTemporary() is deprecated in drupal:9.3.0 and is removed from drupal:10.0.0. There is no replacement. See https://www.drupal.org/node/3211781', E_USER_DEPRECATED);
     $tablename = $this->generateTemporaryTableName();
     $this->query('CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY ' . $query, $args, $options);
     return $tablename;
@@ -281,7 +306,10 @@ class Connection extends DatabaseConnection {
    *   The PDO server version.
    */
   protected function getServerVersion(): string {
-    return $this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION);
+    if (!$this->serverVersion) {
+      $this->serverVersion = $this->connection->query('SELECT VERSION()')->fetchColumn();
+    }
+    return $this->serverVersion;
   }
 
   public function databaseType() {
@@ -400,6 +428,64 @@ class Connection extends DatabaseConnection {
         }
       }
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function rollBack($savepoint_name = 'drupal_transaction') {
+    // MySQL will automatically commit transactions when tables are altered or
+    // created (DDL transactions are not supported). Prevent triggering an
+    // exception to ensure that the error that has caused the rollback is
+    // properly reported.
+    if (!$this->connection->inTransaction()) {
+      // On PHP 7 $this->connection->inTransaction() will return TRUE and
+      // $this->connection->rollback() does not throw an exception; the
+      // following code is unreachable.
+
+      // If \Drupal\Core\Database\Connection::rollBack() would throw an
+      // exception then continue to throw an exception.
+      if (!$this->inTransaction()) {
+        throw new TransactionNoActiveException();
+      }
+      // A previous rollback to an earlier savepoint may mean that the savepoint
+      // in question has already been accidentally committed.
+      if (!isset($this->transactionLayers[$savepoint_name])) {
+        throw new TransactionNoActiveException();
+      }
+
+      trigger_error('Rollback attempted when there is no active transaction. This can cause data integrity issues.', E_USER_WARNING);
+      return;
+    }
+    return parent::rollBack($savepoint_name);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function doCommit() {
+    // MySQL will automatically commit transactions when tables are altered or
+    // created (DDL transactions are not supported). Prevent triggering an
+    // exception in this case as all statements have been committed.
+    if ($this->connection->inTransaction()) {
+      // On PHP 7 $this->connection->inTransaction() will return TRUE and
+      // $this->connection->commit() does not throw an exception.
+      $success = parent::doCommit();
+    }
+    else {
+      // Process the post-root (non-nested) transaction commit callbacks. The
+      // following code is copied from
+      // \Drupal\Core\Database\Connection::doCommit()
+      $success = TRUE;
+      if (!empty($this->rootTransactionEndCallbacks)) {
+        $callbacks = $this->rootTransactionEndCallbacks;
+        $this->rootTransactionEndCallbacks = [];
+        foreach ($callbacks as $callback) {
+          call_user_func($callback, $success);
+        }
+      }
+    }
+    return $success;
   }
 
 }

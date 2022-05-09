@@ -2,6 +2,7 @@
 
 namespace Drupal\jsonapi\EventSubscriber;
 
+use Drupal\jsonapi\CacheableResourceResponse;
 use Drupal\jsonapi\JsonApiResource\ErrorCollection;
 use Drupal\jsonapi\JsonApiResource\JsonApiDocumentTopLevel;
 use Drupal\jsonapi\JsonApiResource\LinkCollection;
@@ -18,7 +19,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * @internal JSON:API maintains no PHP API. The API is the HTTP API. This class
  *   may change at any time and could break any dependencies on it.
  *
- * @see https://www.drupal.org/project/jsonapi/issues/3032787
+ * @see https://www.drupal.org/project/drupal/issues/3032787
  * @see jsonapi.api.php
  */
 class DefaultExceptionSubscriber extends SerializationDefaultExceptionSubscriber {
@@ -56,10 +57,16 @@ class DefaultExceptionSubscriber extends SerializationDefaultExceptionSubscriber
    * {@inheritdoc}
    */
   protected function setEventResponse(ExceptionEvent $event, $status) {
-    /* @var \Symfony\Component\HttpKernel\Exception\HttpException $exception */
+    /** @var \Symfony\Component\HttpKernel\Exception\HttpException $exception */
     $exception = $event->getThrowable();
-    $response = new ResourceResponse(new JsonApiDocumentTopLevel(new ErrorCollection([$exception]), new NullIncludedData(), new LinkCollection([])), $exception->getStatusCode(), $exception->getHeaders());
-    $response->addCacheableDependency($exception);
+    $document = new JsonApiDocumentTopLevel(new ErrorCollection([$exception]), new NullIncludedData(), new LinkCollection([]));
+    if ($event->getRequest()->isMethodCacheable()) {
+      $response = new CacheableResourceResponse($document, $exception->getStatusCode(), $exception->getHeaders());
+      $response->addCacheableDependency($exception);
+    }
+    else {
+      $response = new ResourceResponse($document, $exception->getStatusCode(), $exception->getHeaders());
+    }
     $event->setResponse($response);
   }
 

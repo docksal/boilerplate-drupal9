@@ -176,11 +176,12 @@ class EntityUrlTest extends UnitTestCase {
     $entity->method('isDefaultRevision')->willReturn($is_default_revision);
     $this->registerLinkTemplate($link_template);
     // Even though this is tested with both the 'canonical' and the 'revision'
-    // template registered with the entity, we always ask for the 'revision'
-    // link template, to test that it falls back to the 'canonical' link
-    // template in case of the default revision.
+    // template registered with the entity, we ask for the 'revision' link
+    // template instead of 'canonical', to test that it falls back to the
+    // 'canonical' link template in case of the default revision.
+    $link_template = $link_template === 'canonical' ? 'revision' : $link_template;
     /** @var \Drupal\Core\Url $url */
-    $url = $entity->toUrl('revision');
+    $url = $entity->toUrl($link_template);
     $this->assertUrl($expected_route_name, $expected_route_parameters, $entity, TRUE, $url);
 
   }
@@ -199,6 +200,7 @@ class EntityUrlTest extends UnitTestCase {
     // Add the revision ID to the expected route parameters.
     $route_parameters['test_entity_revision'] = $this->revisionId;
     $test_cases['non_default_revision'] = [static::NON_DEFAULT_REVISION, 'revision', 'entity.test_entity.revision', $route_parameters];
+    $test_cases['revision-delete'] = [static::NON_DEFAULT_REVISION, 'revision-delete-form', 'entity.test_entity.revision_delete_form', $route_parameters];
 
     return $test_cases;
   }
@@ -393,7 +395,7 @@ class EntityUrlTest extends UnitTestCase {
     // Test route with no mandatory parameters.
     $this->registerLinkTemplate('canonical');
     $route_name_0 = 'entity.' . $this->entityTypeId . '.canonical';
-    $url_generator->expects($this->at(0))
+    $url_generator->expects($this->any())
       ->method('generateFromRoute')
       ->with($route_name_0)
       ->willReturn((new GeneratedUrl())->setGeneratedUrl('/entity_test'));
@@ -402,7 +404,7 @@ class EntityUrlTest extends UnitTestCase {
     // Test route with non-default mandatory parameters.
     $this->registerLinkTemplate('{non_default_parameter}');
     $route_name_1 = 'entity.' . $this->entityTypeId . '.{non_default_parameter}';
-    $url_generator->expects($this->at(0))
+    $url_generator->expects($this->any())
       ->method('generateFromRoute')
       ->with($route_name_1)
       ->willThrowException(new MissingMandatoryParametersException());
@@ -431,7 +433,7 @@ class EntityUrlTest extends UnitTestCase {
     // add method prophecies later while still revealing the prophecy now.
     $entity = $this->getMockBuilder($class)
       ->setConstructorArgs([$values, $this->entityTypeId])
-      ->setMethods($methods)
+      ->onlyMethods($methods)
       ->getMockForAbstractClass();
 
     $this->entityType = $this->prophesize(EntityTypeInterface::class);
@@ -458,8 +460,10 @@ class EntityUrlTest extends UnitTestCase {
    *   Whether or not the URL is expected to have a language option.
    * @param \Drupal\Core\Url $url
    *   The URL option to make the assertions on.
+   *
+   * @internal
    */
-  protected function assertUrl($expected_route_name, array $expected_route_parameters, $entity, $has_language, Url $url) {
+  protected function assertUrl(string $expected_route_name, array $expected_route_parameters, $entity, bool $has_language, Url $url): void {
     $this->assertEquals($expected_route_name, $url->getRouteName());
     $this->assertEquals($expected_route_parameters, $url->getRouteParameters());
     $this->assertEquals($this->entityTypeId, $url->getOption('entity_type'));

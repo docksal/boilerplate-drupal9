@@ -2,6 +2,7 @@
 
 namespace Drupal\Core\Composer;
 
+use Composer\DependencyResolver\Operation\UpdateOperation;
 use Composer\Installer\PackageEvent;
 use Composer\Script\Event;
 use Composer\Semver\Constraint\Constraint;
@@ -17,15 +18,13 @@ class Composer {
 
   protected static $packageToCleanup = [
     'behat/mink' => ['tests', 'driver-testsuite'],
-    'behat/mink-browserkit-driver' => ['tests'],
-    'behat/mink-goutte-driver' => ['tests'],
     'behat/mink-selenium2-driver' => ['tests'],
     'composer/composer' => ['bin'],
     'drupal/coder' => ['coder_sniffer/Drupal/Test', 'coder_sniffer/DrupalPractice/Test'],
     'doctrine/instantiator' => ['tests'],
     'easyrdf/easyrdf' => ['scripts'],
     'egulias/email-validator' => ['documentation', 'tests'],
-    'fabpot/goutte' => ['Goutte/Tests'],
+    'friends-of-behat/mink-browserkit-driver' => ['tests'],
     'guzzlehttp/promises' => ['tests'],
     'guzzlehttp/psr7' => ['tests'],
     'instaclick/php-webdriver' => ['doc', 'test'],
@@ -89,6 +88,7 @@ class Composer {
    * Add vendor classes to Composer's static classmap.
    *
    * @param \Composer\Script\Event $event
+   *   The event.
    */
   public static function preAutoloadDump(Event $event) {
     // Get the configured vendor directory.
@@ -161,6 +161,7 @@ class Composer {
    * Ensures that .htaccess and web.config files are present in Composer root.
    *
    * @param \Composer\Script\Event $event
+   *   The event.
    */
   public static function ensureHtaccess(Event $event) {
 
@@ -186,7 +187,7 @@ class Composer {
     $vendor_dir = $event->getComposer()->getConfig()->get('vendor-dir');
     $io = $event->getIO();
     $op = $event->getOperation();
-    if ($op->getJobType() == 'update') {
+    if ($op instanceof UpdateOperation) {
       $package = $op->getTargetPackage();
     }
     else {
@@ -297,6 +298,7 @@ class Composer {
    * Fires the drupal-phpunit-upgrade script event if necessary.
    *
    * @param \Composer\Script\Event $event
+   *   The event.
    */
   public static function upgradePHPUnit(Event $event) {
     $repository = $event->getComposer()->getRepositoryManager()->getLocalRepository();
@@ -310,7 +312,7 @@ class Composer {
       return;
     }
 
-    // If the PHP version is 7.3 or above and PHPUnit is less than version 7
+    // If the PHP version is 7.4 or above and PHPUnit is less than version 9
     // call the drupal-phpunit-upgrade script to upgrade PHPUnit.
     if (!static::upgradePHPUnitCheck($phpunit_package->getVersion())) {
       $event->getComposer()
@@ -332,7 +334,7 @@ class Composer {
    *   TRUE if the PHPUnit needs to be upgraded, FALSE if not.
    */
   public static function upgradePHPUnitCheck($phpunit_version) {
-    return !(version_compare(PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION, '7.3') >= 0 && version_compare($phpunit_version, '7.0') < 0);
+    return !(version_compare(PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION, '7.4') >= 0 && version_compare($phpunit_version, '9.0') < 0);
   }
 
 }

@@ -41,17 +41,10 @@ class MediaLibraryFieldWidgetOpener implements MediaLibraryOpenerInterface {
   public function checkAccess(MediaLibraryState $state, AccountInterface $account) {
     $parameters = $state->getOpenerParameters() + ['entity_id' => NULL];
 
-    $process_result = function ($result) {
-      if ($result instanceof RefinableCacheableDependencyInterface) {
-        $result->addCacheContexts(['url.query_args']);
-      }
-      return $result;
-    };
-
     // Forbid access if any of the required parameters are missing.
     foreach (['entity_type_id', 'bundle', 'field_name'] as $key) {
       if (empty($parameters[$key])) {
-        return $process_result(AccessResult::forbidden("$key parameter is missing."));
+        return AccessResult::forbidden("$key parameter is missing.")->addCacheableDependency($state);
       }
     }
 
@@ -69,7 +62,11 @@ class MediaLibraryFieldWidgetOpener implements MediaLibraryOpenerInterface {
     $storage = $this->entityTypeManager->getStorage($entity_type_id);
     $access_handler = $this->entityTypeManager->getAccessControlHandler($entity_type_id);
 
-    if ($parameters['entity_id']) {
+    if (!empty($parameters['revision_id'])) {
+      $entity = $storage->loadRevision($parameters['revision_id']);
+      $entity_access = $access_handler->access($entity, 'update', $account, TRUE);
+    }
+    elseif ($parameters['entity_id']) {
       $entity = $storage->load($parameters['entity_id']);
       $entity_access = $access_handler->access($entity, 'update', $account, TRUE);
     }
@@ -79,7 +76,10 @@ class MediaLibraryFieldWidgetOpener implements MediaLibraryOpenerInterface {
 
     // If entity-level access is denied, there's no point in continuing.
     if (!$entity_access->isAllowed()) {
-      return $process_result($entity_access);
+      if ($entity_access instanceof RefinableCacheableDependencyInterface) {
+        $entity_access->addCacheableDependency($state);
+      }
+      return $entity_access;
     }
 
     // If the entity has not been loaded, create it in memory now.
@@ -103,7 +103,11 @@ class MediaLibraryFieldWidgetOpener implements MediaLibraryOpenerInterface {
     }
 
     $field_access = $access_handler->fieldAccess('edit', $field_definition, $account, $items, TRUE);
-    return $process_result($entity_access->andIf($field_access));
+    $access = $entity_access->andIf($field_access);
+    if ($access instanceof RefinableCacheableDependencyInterface) {
+      $access->addCacheableDependency($state);
+    }
+    return $access;
   }
 
   /**

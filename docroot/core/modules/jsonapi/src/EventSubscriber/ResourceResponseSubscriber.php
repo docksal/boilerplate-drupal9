@@ -19,7 +19,7 @@ use Symfony\Component\Serializer\SerializerInterface;
  * @internal JSON:API maintains no PHP API. The API is the HTTP API. This class
  *   may change at any time and could break any dependencies on it.
  *
- * @see https://www.drupal.org/project/jsonapi/issues/3032787
+ * @see https://www.drupal.org/project/drupal/issues/3032787
  * @see jsonapi.api.php
  *
  * This is 99% identical to:
@@ -120,8 +120,10 @@ class ResourceResponseSubscriber implements EventSubscriberInterface {
       $jsonapi_doc_object = $serializer->normalize($data, $format, $context);
       // Having just normalized the data, we can associate its cacheability with
       // the response object.
-      assert($jsonapi_doc_object instanceof CacheableNormalization);
-      $response->addCacheableDependency($jsonapi_doc_object);
+      if ($response instanceof CacheableResponseInterface) {
+        assert($jsonapi_doc_object instanceof CacheableNormalization);
+        $response->addCacheableDependency($jsonapi_doc_object);
+      }
       // Finally, encode the normalized data (JSON:API's encoder rasterizes it
       // automatically).
       $response->setContent($serializer->encode($jsonapi_doc_object->getNormalization(), $format));

@@ -2,7 +2,7 @@ Introduction
 ============
 
 Doctrine Annotations allows to implement custom annotation
-functionality for PHP classes.
+functionality for PHP classes and functions.
 
 .. code-block:: php
 
@@ -55,7 +55,7 @@ The annotation class is declared as an annotation by ``@Annotation``.
 Reading annotations
 ===================
 
-The access to the annotations happens by reflection of the class
+The access to the annotations happens by reflection of the class or function
 containing them. There are multiple reader-classes implementing the
 ``Doctrine\Common\Annotations\Reader`` interface, that can access the
 annotations of a class. A common one is
@@ -73,7 +73,10 @@ annotations of a class. A common one is
     $property = $reflectionClass->getProperty('bar');
 
     $reader = new AnnotationReader();
-    $myAnnotation = $reader->getPropertyAnnotation($property, MyAnnotation::class);
+    $myAnnotation = $reader->getPropertyAnnotation(
+        $property,
+        MyAnnotation::class
+    );
 
     echo $myAnnotation->myProperty; // result: "value"
 
@@ -81,7 +84,8 @@ Note that ``AnnotationRegistry::registerLoader('class_exists')`` only works
 if you already have an autoloader configured (i.e. composer autoloader).
 Otherwise, :ref:`please take a look to the other annotation autoload mechanisms <annotations>`.
 
-A reader has multiple methods to access the annotations of a class.
+A reader has multiple methods to access the annotations of a class or
+function.
 
 :ref:`Read more about handling annotations. <annotations>`
 
@@ -90,8 +94,8 @@ IDE Support
 
 Some IDEs already provide support for annotations:
 
-- Eclipse via the `Symfony2 Plugin <http://symfony.dubture.com/>`_
-- PHPStorm via the `PHP Annotations Plugin <http://plugins.jetbrains.com/plugin/7320>`_ or the `Symfony2 Plugin <http://plugins.jetbrains.com/plugin/7219>`_
+- Eclipse via the `Symfony2 Plugin <https://github.com/pulse00/Symfony-2-Eclipse-Plugin>`_
+- PhpStorm via the `PHP Annotations Plugin <https://plugins.jetbrains.com/plugin/7320-php-annotations>`_ or the `Symfony Plugin <https://plugins.jetbrains.com/plugin/7219-symfony-support>`_
 
 .. _Read more about handling annotations.: annotations
 .. _Read more about custom annotations.: custom

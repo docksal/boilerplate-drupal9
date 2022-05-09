@@ -4,6 +4,7 @@ namespace Drupal\Tests\Composer\Plugin\VendorHardening;
 
 use Composer\Package\RootPackageInterface;
 use Drupal\Composer\Plugin\VendorHardening\Config;
+use Drupal\Tests\Traits\PhpUnitWarnings;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -12,12 +13,14 @@ use PHPUnit\Framework\TestCase;
  */
 class ConfigTest extends TestCase {
 
+  use PhpUnitWarnings;
+
   /**
    * @covers ::getPathsForPackage
    */
   public function testGetPathsForPackageMixedCase() {
     $config = $this->getMockBuilder(Config::class)
-      ->setMethods(['getAllCleanupPaths'])
+      ->onlyMethods(['getAllCleanupPaths'])
       ->disableOriginalConstructor()
       ->getMock();
 
@@ -34,7 +37,7 @@ class ConfigTest extends TestCase {
   public function testNoRootMergeConfig() {
     // Root package has no extra field.
     $root = $this->getMockBuilder(RootPackageInterface::class)
-      ->setMethods(['getExtra'])
+      ->onlyMethods(['getExtra'])
       ->getMockForAbstractClass();
     $root->expects($this->once())
       ->method('getExtra')
@@ -59,7 +62,7 @@ class ConfigTest extends TestCase {
   public function testRootMergeConfig() {
     // Root package has configuration in extra.
     $root = $this->getMockBuilder(RootPackageInterface::class)
-      ->setMethods(['getExtra'])
+      ->onlyMethods(['getExtra'])
       ->getMockForAbstractClass();
     $root->expects($this->once())
       ->method('getExtra')
@@ -87,7 +90,7 @@ class ConfigTest extends TestCase {
   public function testMixedCaseConfigCleanupPackages() {
     // Root package has configuration in extra.
     $root = $this->getMockBuilder(RootPackageInterface::class)
-      ->setMethods(['getExtra'])
+      ->onlyMethods(['getExtra'])
       ->getMockForAbstractClass();
     $root->expects($this->once())
       ->method('getExtra')
@@ -113,7 +116,7 @@ class ConfigTest extends TestCase {
     $plugin_config = $ref_plugin_config->invoke($config);
 
     foreach (array_keys($plugin_config) as $package_name) {
-      $this->assertNotRegExp('/[A-Z]/', $package_name);
+      $this->assertDoesNotMatchRegularExpression('/[A-Z]/', $package_name);
     }
   }
 

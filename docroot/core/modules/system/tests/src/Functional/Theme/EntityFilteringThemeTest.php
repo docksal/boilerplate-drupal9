@@ -90,7 +90,10 @@ class EntityFilteringThemeTest extends BrowserTestBase {
     \Drupal::service('theme_installer')->install(array_keys($this->themes));
 
     // Create a test user.
-    $this->user = $this->drupalCreateUser(['access content', 'access user profiles']);
+    $this->user = $this->drupalCreateUser([
+      'access content',
+      'access user profiles',
+    ]);
     $this->user->name = $this->xssLabel;
     $this->user->save();
     $this->drupalLogin($this->user);
@@ -144,7 +147,7 @@ class EntityFilteringThemeTest extends BrowserTestBase {
       foreach ($paths as $path) {
         $this->drupalGet($path);
         $this->assertSession()->statusCodeEquals(200);
-        $this->assertNoRaw($this->xssLabel);
+        $this->assertSession()->responseNotContains($this->xssLabel);
       }
     }
   }

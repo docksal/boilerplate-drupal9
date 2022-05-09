@@ -53,12 +53,14 @@ class AccessTest extends ViewTestBase {
 
     $this->enableViewsTestModule();
 
-    ViewTestData::createTestViews(get_class($this), ['views_test_data']);
+    ViewTestData::createTestViews(static::class, ['views_test_data']);
 
     $this->webUser = $this->drupalCreateUser();
 
     $normal_role = $this->drupalCreateRole([]);
-    $this->normalUser = $this->drupalCreateUser(['views_test_data test permission']);
+    $this->normalUser = $this->drupalCreateUser([
+      'views_test_data test permission',
+    ]);
     $this->normalUser->addRole($normal_role);
     // @todo when all the plugin information is cached make a reset function and
     // call it here.

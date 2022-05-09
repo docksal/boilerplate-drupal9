@@ -45,7 +45,7 @@ class LinkViewsTokensTest extends ViewTestBase {
    */
   protected function setUp($import_test_views = TRUE): void {
     parent::setUp($import_test_views);
-    ViewTestData::createTestViews(get_class($this), ['link_test_views']);
+    ViewTestData::createTestViews(static::class, ['link_test_views']);
 
     // Create Basic page node type.
     $this->drupalCreateContentType([
@@ -86,17 +86,17 @@ class LinkViewsTokensTest extends ViewTestBase {
 
     foreach ($uris as $uri => $title) {
       // Formatted link: {{ field_link }}<br />
-      $this->assertRaw("Formated: <a href=\"$uri\" class=\"test-link-class\">$title</a>");
+      $this->assertSession()->responseContains("Formatted: <a href=\"$uri\" class=\"test-link-class\">$title</a>");
 
       // Raw uri: {{ field_link__uri }}<br />
-      $this->assertRaw("Raw uri: $uri");
+      $this->assertSession()->responseContains("Raw uri: $uri");
 
       // Raw title: {{ field_link__title }}<br />
-      $this->assertRaw("Raw title: $title");
+      $this->assertSession()->responseContains("Raw title: $title");
 
       // Raw options: {{ field_link__options }}<br />
       // Options is an array and should return empty after token replace.
-      $this->assertRaw("Raw options: .");
+      $this->assertSession()->responseContains("Raw options: .");
     }
   }
 

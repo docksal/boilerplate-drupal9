@@ -3,7 +3,7 @@
  * A Backbone View that provides an entity level toolbar.
  */
 
-(function($, _, Backbone, Drupal, debounce, Popper) {
+(function ($, _, Backbone, Drupal, debounce, Popper) {
   Drupal.quickedit.EntityToolbarView = Backbone.View.extend(
     /** @lends Drupal.quickedit.EntityToolbarView# */ {
       /**
@@ -100,8 +100,8 @@
           if ($body.children('#quickedit-entity-toolbar').length === 0) {
             $body.append(this.$el);
           }
-          // The fence will define a area on the screen that the entity toolbar
-          // will be position within.
+          // The fence will define an area on the screen that the entity toolbar
+          // will be positioned within.
           if ($body.children('#quickedit-toolbar-fence').length === 0) {
             this.$fence = $(Drupal.theme('quickeditEntityToolbarFence'))
               .css(Drupal.displace())
@@ -258,9 +258,8 @@
 
             case 3:
               // Position against a highlighted field.
-              highlightedField = Drupal.quickedit.app.model.get(
-                'highlightedField',
-              );
+              highlightedField =
+                Drupal.quickedit.app.model.get('highlightedField');
               of =
                 highlightedField &&
                 highlightedField.editorView &&
@@ -274,8 +273,9 @@
               let topMostField = null;
               // Position against the topmost field.
               for (let i = 0; i < fieldModels.length; i++) {
-                const pos = fieldModels[i].get('el').getBoundingClientRect()
-                  .top;
+                const pos = fieldModels[i]
+                  .get('el')
+                  .getBoundingClientRect().top;
                 if (pos < topMostPosition) {
                   topMostPosition = pos;
                   topMostField = fieldModels[i];
@@ -496,9 +496,8 @@
         const activeFieldLabel =
           activeField && activeField.get('metadata').label;
         // Label of a highlighted field, if it exists.
-        const highlightedField = Drupal.quickedit.app.model.get(
-          'highlightedField',
-        );
+        const highlightedField =
+          Drupal.quickedit.app.model.get('highlightedField');
         const highlightedFieldLabel =
           highlightedField && highlightedField.get('metadata').label;
         // The label is constructed in a priority order.

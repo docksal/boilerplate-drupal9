@@ -213,7 +213,7 @@ class MigrationState {
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
    *   Module handler.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
-   *   Messenger sevice.
+   *   Messenger service.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $stringTranslation
    *   String translation service.
    */
@@ -254,7 +254,7 @@ class MigrationState {
   protected function getMigrationStates() {
     // Always instantiate a new YamlDiscovery object so that we always search on
     // the up-to-date list of modules.
-    $discovery = new YamlDiscovery('migrate_drupal', array_map(function (&$value) {
+    $discovery = new YamlDiscovery('migrate_drupal', array_map(function ($value) {
       return $value . '/migrations/state';
     }, $this->moduleHandler->getModuleDirectories()));
     return $discovery->findAll();

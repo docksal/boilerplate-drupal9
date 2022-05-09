@@ -50,7 +50,9 @@ class InvalidUpdateHookTest extends BrowserTestBase {
     require_once $this->root . '/core/includes/update.inc';
 
     $this->updateUrl = $GLOBALS['base_url'] . '/update.php';
-    $this->updateUser = $this->drupalCreateUser(['administer software updates']);
+    $this->updateUser = $this->drupalCreateUser([
+      'administer software updates',
+    ]);
   }
 
   public function testInvalidUpdateHook() {
@@ -58,8 +60,8 @@ class InvalidUpdateHookTest extends BrowserTestBase {
     $this->drupalLogin($this->updateUser);
     $this->drupalGet($this->updateUrl);
     $this->updateRequirementsProblem();
-    $this->clickLink(t('Continue'));
-    $this->assertText(t('Some of the pending updates cannot be applied because their dependencies were not met.'));
+    $this->clickLink('Continue');
+    $this->assertSession()->pageTextContains('Some of the pending updates cannot be applied because their dependencies were not met.');
   }
 
 }

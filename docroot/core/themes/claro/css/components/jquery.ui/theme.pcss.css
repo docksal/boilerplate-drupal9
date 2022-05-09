@@ -16,6 +16,10 @@
   border: none;
 }
 
+.ui-dialog {
+  z-index: var(--jui-dialog-z-index);
+}
+
 /**
  * Interaction states
  */
@@ -45,12 +49,12 @@
 .ui-state-disabled,
 .ui-widget-content .ui-state-disabled {
   opacity: 0.35;
-  filter: alpha(Opacity=35);
+  filter: alpha(opacity=35);
 }
 .ui-priority-secondary,
 .ui-widget-content .ui-priority-secondary {
   opacity: 0.7;
-  filter: alpha(Opacity=70);
+  filter: alpha(opacity=70);
 }
 
 /**
@@ -332,9 +336,9 @@
  * Overlays
  */
 .ui-widget-overlay {
+  z-index: calc(var(--jui-dialog-z-index) - 1);
   opacity: 0.7;
-  filter: alpha(Opacity=70);
-  background: #000;
+  background: var(--color-text);
 }
 
 /**
@@ -377,7 +381,6 @@
  * Autocomplete
  */
 .ui-autocomplete {
-  overflow: hidden;
   color: var(--jui-dropdown-fg-color);
   border: var(--input-border-size) solid var(--jui-dropdown-border-color);
   border-top: 0;

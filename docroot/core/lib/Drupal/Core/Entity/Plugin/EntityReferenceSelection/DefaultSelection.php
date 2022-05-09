@@ -168,6 +168,10 @@ class DefaultSelection extends SelectionPluginBase implements ContainerFactoryPl
         $bundle_options[$bundle_name] = $bundle_info['label'];
       }
       natsort($bundle_options);
+      $selected_bundles = array_intersect_key(
+        $bundle_options,
+        array_filter((array) $configuration['target_bundles'])
+      );
 
       $form['target_bundles'] = [
         '#type' => 'checkboxes',
@@ -177,7 +181,7 @@ class DefaultSelection extends SelectionPluginBase implements ContainerFactoryPl
         '#required' => TRUE,
         '#size' => 6,
         '#multiple' => TRUE,
-        '#element_validate' => [[get_class($this), 'elementValidateFilter']],
+        '#element_validate' => [[static::class, 'elementValidateFilter']],
         '#ajax' => TRUE,
         '#limit_validation_errors' => [],
       ];
@@ -200,13 +204,14 @@ class DefaultSelection extends SelectionPluginBase implements ContainerFactoryPl
     }
 
     if ($entity_type->entityClassImplements(FieldableEntityInterface::class)) {
+      $options = $entity_type->hasKey('bundle') ? $selected_bundles : $bundles;
       $fields = [];
-      foreach (array_keys($bundles) as $bundle) {
+      foreach (array_keys($options) as $bundle) {
         $bundle_fields = array_filter($this->entityFieldManager->getFieldDefinitions($entity_type_id, $bundle), function ($field_definition) {
           return !$field_definition->isComputed();
         });
         foreach ($bundle_fields as $field_name => $field_definition) {
-          /* @var \Drupal\Core\Field\FieldDefinitionInterface $field_definition */
+          /** @var \Drupal\Core\Field\FieldDefinitionInterface $field_definition */
           $columns = $field_definition->getFieldStorageDefinition()->getColumns();
           // If there is more than one column, display them all, otherwise just
           // display the field label.
@@ -246,18 +251,31 @@ class DefaultSelection extends SelectionPluginBase implements ContainerFactoryPl
         '#process' => [[EntityReferenceItem::class, 'formProcessMergeParent']],
       ];
 
-      if ($configuration['sort']['field'] != '_none') {
-        $form['sort']['settings']['direction'] = [
-          '#type' => 'select',
-          '#title' => $this->t('Sort direction'),
-          '#required' => TRUE,
-          '#options' => [
-            'ASC' => $this->t('Ascending'),
-            'DESC' => $this->t('Descending'),
+      $form['sort']['settings']['direction'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Sort direction'),
+        '#required' => TRUE,
+        '#options' => [
+          'ASC' => $this->t('Ascending'),
+          'DESC' => $this->t('Descending'),
+        ],
+        '#default_value' => $configuration['sort']['direction'],
+        '#states' => [
+          'visible' => [
+            ':input[name="settings[handler_settings][sort][field]"]' => [
+              '!value' => '_none',
+            ],
           ],
-          '#default_value' => $configuration['sort']['direction'],
+        ],
+      ];
+      if ($entity_type->hasKey('bundle')) {
+        $form['sort']['settings']['direction']['#states']['visible'][] = [
+          ':input[name^="settings[handler_settings][target_bundles]["]' => [
+            'checked' => TRUE,
+          ],
         ];
       }
+
     }
 
     $form['auto_create'] = [
@@ -268,13 +286,12 @@ class DefaultSelection extends SelectionPluginBase implements ContainerFactoryPl
     ];
 
     if ($entity_type->hasKey('bundle')) {
-      $bundles = array_intersect_key($bundle_options, array_filter((array) $configuration['target_bundles']));
       $form['auto_create_bundle'] = [
         '#type' => 'select',
         '#title' => $this->t('Store new items in'),
-        '#options' => $bundles,
+        '#options' => $selected_bundles,
         '#default_value' => $configuration['auto_create_bundle'],
-        '#access' => count($bundles) > 1,
+        '#access' => count($selected_bundles) > 1,
         '#states' => [
           'visible' => [
             ':input[name="settings[handler_settings][auto_create]"]' => ['checked' => TRUE],
@@ -335,7 +352,7 @@ class DefaultSelection extends SelectionPluginBase implements ContainerFactoryPl
     $entities = $this->entityTypeManager->getStorage($target_type)->loadMultiple($result);
     foreach ($entities as $entity_id => $entity) {
       $bundle = $entity->bundle();
-      $options[$bundle][$entity_id] = Html::escape($this->entityRepository->getTranslationFromContext($entity)->label());
+      $options[$bundle][$entity_id] = Html::escape($this->entityRepository->getTranslationFromContext($entity)->label() ?? '');
     }
 
     return $options;
@@ -373,13 +390,16 @@ class DefaultSelection extends SelectionPluginBase implements ContainerFactoryPl
    */
   public function createNewEntity($entity_type_id, $bundle, $label, $uid) {
     $entity_type = $this->entityTypeManager->getDefinition($entity_type_id);
-    $bundle_key = $entity_type->getKey('bundle');
-    $label_key = $entity_type->getKey('label');
 
-    $entity = $this->entityTypeManager->getStorage($entity_type_id)->create([
-      $bundle_key => $bundle,
-      $label_key => $label,
-    ]);
+    $values = [
+      $entity_type->getKey('label') => $label,
+    ];
+
+    if ($bundle_key = $entity_type->getKey('bundle')) {
+      $values[$bundle_key] = $bundle;
+    }
+
+    $entity = $this->entityTypeManager->getStorage($entity_type_id)->create($values);
 
     if ($entity instanceof EntityOwnerInterface) {
       $entity->setOwnerId($uid);
@@ -420,6 +440,7 @@ class DefaultSelection extends SelectionPluginBase implements ContainerFactoryPl
     $entity_type = $this->entityTypeManager->getDefinition($target_type);
 
     $query = $this->entityTypeManager->getStorage($target_type)->getQuery();
+    $query->accessCheck(TRUE);
 
     // If 'target_bundles' is NULL, all bundles are referenceable, no further
     // conditions are needed.

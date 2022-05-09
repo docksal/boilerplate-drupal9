@@ -69,16 +69,13 @@ class ConfigTranslationUiThemeTest extends BrowserTestBase {
     $this->drupalLogin($this->adminUser);
 
     $this->drupalGet('admin/appearance');
-    $elements = $this->xpath('//a[normalize-space()=:label and contains(@href, :theme)]', [
-      ':label' => 'Install and set as default',
-      ':theme' => $theme,
-    ]);
-    $this->drupalGet($GLOBALS['base_root'] . $elements[0]->getAttribute('href'), ['external' => TRUE]);
+    $element = $this->assertSession()->elementExists('xpath', "//a[normalize-space()='Install and set as default' and contains(@href, '{$theme}')]");
+    $this->drupalGet($GLOBALS['base_root'] . $element->getAttribute('href'), ['external' => TRUE]);
 
     $translation_base_url = 'admin/config/development/performance/translate';
     $this->drupalGet($translation_base_url);
     $this->assertSession()->statusCodeEquals(200);
-    $this->assertLinkByHref("$translation_base_url/fr/add");
+    $this->assertSession()->linkByHrefExists("$translation_base_url/fr/add");
   }
 
 }

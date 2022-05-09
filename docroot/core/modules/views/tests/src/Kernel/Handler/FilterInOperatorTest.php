@@ -46,7 +46,7 @@ class FilterInOperatorTest extends ViewsKernelTestBase {
     $view = Views::getView('test_view');
     $view->setDisplay();
 
-    // Add a in_operator ordering.
+    // Add an in_operator ordering.
     $view->displayHandlers->get('default')->overrideOption('filters', [
       'age' => [
         'id' => 'age',
@@ -76,7 +76,7 @@ class FilterInOperatorTest extends ViewsKernelTestBase {
     $view->destroy();
     $view->setDisplay();
 
-    // Add a in_operator ordering.
+    // Add an in_operator ordering.
     $view->displayHandlers->get('default')->overrideOption('filters', [
       'age' => [
         'id' => 'age',
@@ -234,7 +234,7 @@ class FilterInOperatorTest extends ViewsKernelTestBase {
   }
 
   /**
-   * Tests that the InOperator filter can handle TranslateableMarkup.
+   * Tests that the InOperator filter can handle TranslatableMarkup.
    */
   public function testFilterOptionAsMarkup() {
     $view = $this->prophesize(ViewExecutable::class);

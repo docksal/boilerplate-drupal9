@@ -155,6 +155,7 @@ class Updater {
    *   provide their canonical name.
    *
    * @param string $directory
+   *   The full directory path.
    *
    * @return string
    *   The name of the project.
@@ -291,7 +292,7 @@ class Updater {
       return $this->postInstallTasks();
     }
     catch (FileTransferException $e) {
-      throw new UpdaterFileTransferException("File Transfer failed, reason: '" . strtr($e->getMessage(), $e->arguments)) . "'";
+      throw new UpdaterFileTransferException("File Transfer failed, reason: '" . strtr($e->getMessage(), $e->arguments) . "'");
     }
   }
 

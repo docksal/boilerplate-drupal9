@@ -51,7 +51,7 @@ class ExcludedFieldTokenTest extends ViewTestBase {
   protected function setUp($import_test_views = TRUE): void {
     parent::setUp($import_test_views);
 
-    ViewTestData::createTestViews(get_class($this), ['rest_test_views']);
+    ViewTestData::createTestViews(static::class, ['rest_test_views']);
 
     // Create some test content.
     for ($i = 1; $i <= 10; $i++) {
@@ -86,7 +86,7 @@ class ExcludedFieldTokenTest extends ViewTestBase {
       ['nothing' => 'Article test 2'],
       ['nothing' => 'Article test 1'],
     ];
-    $this->assertIdentical($actual_json, json_encode($expected));
+    $this->assertSame(json_encode($expected), $actual_json);
   }
 
 }

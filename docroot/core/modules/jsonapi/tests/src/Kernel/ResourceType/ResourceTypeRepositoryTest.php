@@ -207,4 +207,19 @@ class ResourceTypeRepositoryTest extends JsonapiKernelTestBase {
     $this->assertTrue($this->resourceTypeRepository->getByTypeName('node--page')->isFieldEnabled('uid'));
   }
 
+  /**
+   * Tests that resource types can be renamed.
+   */
+  public function testResourceTypeRenaming() {
+    \Drupal::state()->set('jsonapi_test_resource_type_builder.renamed_resource_types', [
+      'node--article' => 'articles',
+      'node--page' => 'pages',
+    ]);
+    Cache::invalidateTags(['jsonapi_resource_types']);
+    $this->assertNull($this->resourceTypeRepository->getByTypeName('node--article'));
+    $this->assertInstanceOf(ResourceType::class, $this->resourceTypeRepository->getByTypeName('articles'));
+    $this->assertNull($this->resourceTypeRepository->getByTypeName('node--page'));
+    $this->assertInstanceOf(ResourceType::class, $this->resourceTypeRepository->getByTypeName('pages'));
+  }
+
 }

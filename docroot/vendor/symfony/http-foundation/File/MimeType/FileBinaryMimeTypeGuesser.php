@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\File\Exception\AccessDeniedException;
 use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
 use Symfony\Component\Mime\FileBinaryMimeTypeGuesser as NewFileBinaryMimeTypeGuesser;
 
-@trigger_error(sprintf('The "%s" class is deprecated since Symfony 4.3, use "%s" instead.', FileBinaryMimeTypeGuesser::class, NewFileBinaryMimeTypeGuesser::class), E_USER_DEPRECATED);
+@trigger_error(sprintf('The "%s" class is deprecated since Symfony 4.3, use "%s" instead.', FileBinaryMimeTypeGuesser::class, NewFileBinaryMimeTypeGuesser::class), \E_USER_DEPRECATED);
 
 /**
  * Guesses the mime type with the binary "file" (only available on *nix).
@@ -85,7 +85,7 @@ class FileBinaryMimeTypeGuesser implements MimeTypeGuesserInterface
         ob_start();
 
         // need to use --mime instead of -i. see #6641
-        passthru(sprintf($this->cmd, escapeshellarg((0 === strpos($path, '-') ? './' : '').$path)), $return);
+        passthru(sprintf($this->cmd, escapeshellarg((str_starts_with($path, '-') ? './' : '').$path)), $return);
         if ($return > 0) {
             ob_end_clean();
 

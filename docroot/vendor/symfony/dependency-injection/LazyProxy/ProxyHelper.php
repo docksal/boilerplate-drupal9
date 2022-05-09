@@ -31,26 +31,45 @@ class ProxyHelper
         if (!$type) {
             return null;
         }
-        if (!\is_string($type)) {
-            $name = $type->getName();
 
-            if ($type->isBuiltin()) {
-                return $noBuiltin ? null : $name;
-            }
-        }
-        $lcName = strtolower($name);
-        $prefix = $noBuiltin ? '' : '\\';
-
-        if ('self' !== $lcName && 'parent' !== $lcName) {
-            return $prefix.$name;
-        }
-        if (!$r instanceof \ReflectionMethod) {
+        $types = [];
+        $glue = '|';
+        if ($type instanceof \ReflectionUnionType) {
+            $reflectionTypes = $type->getTypes();
+        } elseif ($type instanceof \ReflectionIntersectionType) {
+            $reflectionTypes = $type->getTypes();
+            $glue = '&';
+        } elseif ($type instanceof \ReflectionNamedType) {
+            $reflectionTypes = [$type];
+        } else {
             return null;
         }
-        if ('self' === $lcName) {
-            return $prefix.$r->getDeclaringClass()->name;
+
+        foreach ($reflectionTypes as $type) {
+            if ($type->isBuiltin()) {
+                if (!$noBuiltin) {
+                    $types[] = $type->getName();
+                }
+                continue;
+            }
+
+            $lcName = strtolower($type->getName());
+            $prefix = $noBuiltin ? '' : '\\';
+
+            if ('self' !== $lcName && 'parent' !== $lcName) {
+                $types[] = $prefix.$type->getName();
+                continue;
+            }
+            if (!$r instanceof \ReflectionMethod) {
+                continue;
+            }
+            if ('self' === $lcName) {
+                $types[] = $prefix.$r->getDeclaringClass()->name;
+            } else {
+                $types[] = ($parent = $r->getDeclaringClass()->getParentClass()) ? $prefix.$parent->name : null;
+            }
         }
 
-        return ($parent = $r->getDeclaringClass()->getParentClass()) ? $prefix.$parent->name : null;
+        return $types ? implode($glue, $types) : null;
     }
 }

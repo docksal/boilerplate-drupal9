@@ -3,6 +3,7 @@
 namespace Drupal\Tests\text\FunctionalJavascript;
 
 use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 
 /**
@@ -30,14 +31,19 @@ class TextareaWithSummaryTest extends WebDriverTestBase {
 
     $this->drupalCreateContentType(['type' => 'page']);
 
-    $account = $this->drupalCreateUser(['create page content', 'edit own page content']);
+    $account = $this->drupalCreateUser([
+      'create page content',
+      'edit own page content',
+    ]);
     $this->drupalLogin($account);
   }
 
   /**
    * Helper to test toggling the summary area.
+   *
+   * @internal
    */
-  protected function assertSummaryToggle() {
+  protected function assertSummaryToggle(): void {
     $this->drupalGet('node/add/page');
     $widget = $this->getSession()->getPage()->findById('edit-body-wrapper');
     $summary_field = $widget->findField('edit-body-0-summary');
@@ -66,6 +72,13 @@ class TextareaWithSummaryTest extends WebDriverTestBase {
     $body_field = FieldConfig::loadByName('node', 'page', 'body');
     $body_field->set('description', 'Text with Summary field description.');
     $body_field->save();
+
+    $this->assertSummaryToggle();
+
+    // Repeat test with unlimited cardinality field.
+    $body_field_storage = FieldStorageConfig::loadByName('node', 'body');
+    $body_field_storage->setCardinality(-1);
+    $body_field_storage->save();
 
     $this->assertSummaryToggle();
 

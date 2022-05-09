@@ -1,5 +1,56 @@
 # Changelog
 
+### 3.0.10 2/21/2022
+
+* symfony/process ^6
+
+### 3.0.8 2/15/2022
+
+* Fix bug when using dot-access-data ^3 (#1104)
+* ProgressIndicator uses the stdError by Andor (#1101)
+* Use TaskAccessor trait in Task\Archive\Extract by Andor (#1089)
+* Avoid cross volume rename in Task\Archive\Extract by Andor (#1090)
+* Fixing PHPDoc block @param on BuilderAwareTrait::collectionBuilder by Jay Klehr (#1096)
+* League container 4 by Nicos Panayides (#1083)
+* PHP 8.1 TimeKeeper implicit conversion from float to int by Andor (#1095)
+
+### 3.0.7 12/30/2021
+
+* PHP 8.1 & Symfony 6 (#1092, #1091)
+* PackPhar: Don't strip PHP8 attributes by Gintautas Miselis (#1084)
+* Fix image minifier task by Dan Untenzu (#1052)
+
+### 3.0.6 10/5/2021
+
+* Use consolidation/self-update ^2
+
+### 3.0.4 08/28/2021
+
+* Undeprecate escapeArgument() by Mark Dorison (#1039)
+* Add setProcessInput and deprecate setInput by Rodrigo (#1034)
+* Add array as a type accepted for argv parameter by Rodrigo (#1032)
+* Fix null return in createContainer by Rodrigo (#1031)
+* Fix mkdir error in taskExtract on PHP 8 by wxa (#1028)
+* refactor: Remove hardcoded namespace by Pol Dellaiera refactor (#1026)
+* refactor: Use proper use imports by Pol Dellaiera refactor (#1025)
+* Run linter in parallel by Viktor Szépe (#1020)
+* Fix task pack (#1044)
+
+### 3.0.0 02/21/2021
+
+* PHP 8 support
+* Update to league/container ^3
+* Prefer passing `ConsoleIO $io` to commands over `$this->io()`, which is now deprecated.
+* `loadTasks` renamed to `Tasks`
+
+### 2.2.0 09/05/2020
+
+* New CheckPlatformReqs task by Pierre Rudloff (#957)
+* Add Runner function for retrieving an application to be used with tests by Les Peabody (#968)
+* Add ignorelist to pack command by O'Briat (#964)
+* Create a semver file if using the SemVer task for the first time by Dan Untenzu (#960)
+* Allow symfony/yaml ^5
+
 ### 2.1.0 05/27/2020
 
 * Symfony 5 support. (#940)

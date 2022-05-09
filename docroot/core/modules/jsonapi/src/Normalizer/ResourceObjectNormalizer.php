@@ -17,7 +17,7 @@ use Drupal\jsonapi\Normalizer\Value\CacheableOmission;
  * @internal JSON:API maintains no PHP API since its API is the HTTP API. This
  *   class may change at any time and this will break any dependencies on it.
  *
- * @see https://www.drupal.org/project/jsonapi/issues/3032787
+ * @see https://www.drupal.org/project/drupal/issues/3032787
  * @see jsonapi.api.php
  */
 class ResourceObjectNormalizer extends NormalizerBase {
@@ -122,11 +122,7 @@ class ResourceObjectNormalizer extends NormalizerBase {
     }
     // Add links if missing.
     $base = &$normalizer_values[ResourceObjectNormalizationCacher::RESOURCE_CACHE_SUBSET_BASE];
-    $base['links'] = isset($base['links'])
-      ? $base['links']
-      : $this->serializer
-        ->normalize($object->getLinks(), $format, $context)
-        ->omitIfEmpty();
+    $base['links'] = $base['links'] ?? $this->serializer->normalize($object->getLinks(), $format, $context)->omitIfEmpty();
 
     if (!empty($non_cached_requested_fields)) {
       $this->cacher->saveOnTerminate($object, $normalizer_values);

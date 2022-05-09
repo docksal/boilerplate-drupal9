@@ -14,9 +14,9 @@
 
   Drupal.behaviors.claroVerticalTabs = {
     attach: function attach(context) {
-      $('body').once('vertical-tabs-fragments').on('formFragmentLinkClickOrHashChange.verticalTabs', handleFragmentLinkClickOrHashChange);
-      $(context).find('[data-vertical-tabs-panes]').once('vertical-tabs').each(function initializeVerticalTabs() {
-        var $this = $(this).addClass('vertical-tabs__items--processed');
+      $(once('vertical-tabs-fragments', 'body')).on('formFragmentLinkClickOrHashChange.verticalTabs', handleFragmentLinkClickOrHashChange);
+      once('vertical-tabs', '[data-vertical-tabs-panes]', context).forEach(function (panes) {
+        var $this = $(panes).addClass('vertical-tabs__items--processed');
         var focusID = $this.find(':hidden.vertical-tabs__active-tab').val();
         var tabFocus;
         var $details = $this.find('> details');
@@ -63,7 +63,6 @@
     $.extend(this, settings, Drupal.theme('verticalTab', settings));
     this.item.addClass('js-vertical-tabs-menu-item');
     this.link.attr('href', "#".concat(settings.details.attr('id')));
-    this.detailsSummaryDescription = $(Drupal.theme.verticalTabDetailsDescription()).appendTo(this.details.find('> summary'));
     this.link.on('click', function (event) {
       event.preventDefault();
       self.focus();
@@ -133,7 +132,6 @@
     },
     updateSummary: function updateSummary() {
       var summary = this.details.drupalGetSummary();
-      this.detailsSummaryDescription.html(summary);
       this.summary.html(summary);
     },
     tabShow: function tabShow() {
@@ -155,8 +153,8 @@
       if ($firstTab.length) {
         $firstTab.data('verticalTab').focus(false);
       } else {
-          this.item.closest('.js-form-type-vertical-tabs').hide();
-        }
+        this.item.closest('.js-form-type-vertical-tabs').hide();
+      }
 
       return this;
     }
@@ -174,10 +172,6 @@
 
   Drupal.theme.verticalTabListWrapper = function () {
     return '<ul class="vertical-tabs__menu"></ul>';
-  };
-
-  Drupal.theme.verticalTabDetailsDescription = function () {
-    return '<span class="vertical-tabs__details-summary-summary"></span>';
   };
 
   Drupal.theme.verticalTabActiveTabIndicator = function () {

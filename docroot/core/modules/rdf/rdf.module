@@ -170,7 +170,7 @@ function rdf_rdfa_attributes($mapping, $data = NULL) {
   $attributes = [];
 
   // The type of mapping defaults to 'property'.
-  $type = isset($mapping['mapping_type']) ? $mapping['mapping_type'] : 'property';
+  $type = $mapping['mapping_type'] ?? 'property';
 
   switch ($type) {
     // The mapping expresses the relationship between two resources.
@@ -187,7 +187,7 @@ function rdf_rdfa_attributes($mapping, $data = NULL) {
         // Convert $data to a specific format as per the callback function.
         if (isset($data) && !empty($mapping['datatype_callback'])) {
           $callback = $mapping['datatype_callback']['callable'];
-          $arguments = isset($mapping['datatype_callback']['arguments']) ? $mapping['datatype_callback']['arguments'] : NULL;
+          $arguments = $mapping['datatype_callback']['arguments'] ?? NULL;
           $attributes['content'] = call_user_func($callback, $data, $arguments);
         }
         if (isset($mapping['datatype'])) {
@@ -237,12 +237,13 @@ function rdf_comment_storage_load($comments) {
       ->getPreparedFieldMapping('created');
     /** @var \Drupal\comment\CommentInterface $comment*/
     $comment->rdf_data['date'] = rdf_rdfa_attributes($created_mapping, $comment->get('created')->first()->toArray());
-    $entity = $comment->getCommentedEntity();
-    // The current function is a storage level hook, so avoid to bubble
-    // bubbleable metadata, because it can be outside of a render context.
-    $comment->rdf_data['entity_uri'] = $entity->toUrl()->toString(TRUE)->getGeneratedUrl();
-    if ($comment->hasParentComment()) {
-      $comment->rdf_data['pid_uri'] = $comment->getParentComment()->toUrl()->toString(TRUE)->getGeneratedUrl();
+    if ($entity = $comment->getCommentedEntity()) {
+      // The current function is a storage level hook, so avoid to bubble
+      // bubbleable metadata, because it can be outside of a render context.
+      $comment->rdf_data['entity_uri'] = $entity->toUrl()->toString(TRUE)->getGeneratedUrl();
+    }
+    if ($parent = $comment->getParentComment()) {
+      $comment->rdf_data['pid_uri'] = $parent->toUrl()->toString(TRUE)->getGeneratedUrl();
     }
   }
 }
@@ -376,7 +377,7 @@ function rdf_preprocess_node(&$variables) {
  * Implements hook_preprocess_HOOK() for user templates.
  */
 function rdf_preprocess_user(&$variables) {
-  /** @var $account \Drupal\user\UserInterface */
+  /** @var \Drupal\user\UserInterface $account */
   $account = $variables['elements']['#user'];
   $uri = $account->toUrl();
   $mapping = rdf_get_mapping('user', 'user');

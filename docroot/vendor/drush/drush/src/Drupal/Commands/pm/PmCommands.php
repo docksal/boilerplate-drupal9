@@ -6,6 +6,7 @@ use Consolidation\OutputFormatters\StructuredData\RowsOfFields;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\MissingDependencyException;
 use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Extension\ModuleInstallerInterface;
 use Drupal\Core\Extension\ThemeHandlerInterface;
 use Drush\Commands\DrushCommands;
@@ -20,15 +21,18 @@ class PmCommands extends DrushCommands
 
     protected $moduleInstaller;
 
+    protected $moduleHandler;
+
     protected $themeHandler;
 
     protected $extensionListModule;
 
-    public function __construct(ConfigFactoryInterface $configFactory, ModuleInstallerInterface $moduleInstaller, ThemeHandlerInterface $themeHandler, ModuleExtensionList $extensionListModule)
+    public function __construct(ConfigFactoryInterface $configFactory, ModuleInstallerInterface $moduleInstaller, ModuleHandlerInterface $moduleHandler, ThemeHandlerInterface $themeHandler, ModuleExtensionList $extensionListModule)
     {
         parent::__construct();
         $this->configFactory = $configFactory;
         $this->moduleInstaller = $moduleInstaller;
+        $this->moduleHandler = $moduleHandler;
         $this->themeHandler = $themeHandler;
         $this->extensionListModule = $extensionListModule;
     }
@@ -47,6 +51,14 @@ class PmCommands extends DrushCommands
     public function getModuleInstaller()
     {
         return $this->moduleInstaller;
+    }
+
+    /**
+     * @return \Drupal\Core\Extension\ModuleHandlerInterface
+     */
+    public function getModuleHandler()
+    {
+        return $this->moduleHandler;
     }
 
     /**
@@ -71,6 +83,7 @@ class PmCommands extends DrushCommands
      * @command pm:enable
      * @param $modules A comma delimited list of modules.
      * @aliases en,pm-enable
+     * @bootstrap root
      */
     public function enable(array $modules)
     {
@@ -94,9 +107,54 @@ class PmCommands extends DrushCommands
             drush_backend_batch_process();
         }
         $this->logger()->success(dt('Successfully enabled: !list', $todo_str));
-        // Our logger got blown away during the container rebuild above.
-        $boot = Drush::bootstrapManager()->bootstrap();
-        $boot->addLogger();
+    }
+
+    /**
+     * Run requirements checks on the module installation.
+     *
+     * @hook validate pm:enable
+     *
+     * @throws \Drush\Exceptions\UserAbortException
+     * @throws \Drupal\Core\Extension\MissingDependencyException
+     *
+     * @see \drupal_check_module()
+     */
+    public function validateEnableModules(CommandData $commandData)
+    {
+        $modules = $commandData->input()->getArgument('modules');
+        $modules = StringUtils::csvToArray($modules);
+        $modules = $this->addInstallDependencies($modules);
+        if (empty($modules)) {
+            return;
+        }
+
+        require_once DRUSH_DRUPAL_CORE . '/includes/install.inc';
+        $error = false;
+        foreach ($modules as $module) {
+            module_load_install($module);
+            $requirements = $this->getModuleHandler()->invoke($module, 'requirements', ['install']);
+            if (is_array($requirements) && drupal_requirements_severity($requirements) == REQUIREMENT_ERROR) {
+                $error = true;
+                $reasons = [];
+                foreach ($requirements as $id => $requirement) {
+                    if (isset($requirement['severity']) && $requirement['severity'] == REQUIREMENT_ERROR) {
+                        $message = $requirement['description'];
+                        if (isset($requirement['value']) && $requirement['value']) {
+                            $message = dt('@requirements_message (Currently using @item version @version)', ['@requirements_message' => $requirement['description'], '@item' => $requirement['title'], '@version' => $requirement['value']]);
+                        }
+                        $reasons[$id] = $message;
+                    }
+                }
+                $this->logger()->error(sprintf("Unable to install module '%s' due to unmet requirement(s):%s", $module, "\n  - " . implode("\n  - ", $reasons)));
+            }
+        }
+
+        if ($error) {
+            // Let the user confirm the installation if the requirements are unmet.
+            if (!$this->io()->confirm(dt('The module install requirements failed. Do you wish to continue?'))) {
+                throw new UserAbortException();
+            }
+        }
     }
 
     /**
@@ -120,9 +178,6 @@ class PmCommands extends DrushCommands
             throw new \Exception('Unable to uninstall modules.');
         }
         $this->logger()->success(dt('Successfully uninstalled: !list', ['!list' => implode(', ', $list)]));
-        // Our logger got blown away during the container rebuild above.
-        $boot = Drush::bootstrapManager()->bootstrap();
-        $boot->addLogger();
     }
 
     /**
@@ -154,6 +209,7 @@ class PmCommands extends DrushCommands
      * @option package Only show extensions having a given project packages (e.g. Development).
      * @field-labels
      *   package: Package
+     *   project: Project
      *   display_name: Name
      *   name: Name
      *   type: Type
@@ -222,6 +278,7 @@ class PmCommands extends DrushCommands
 
             $row = [
                 'package' => $extension->info['package'],
+                'project' => isset($extension->info['project']) ? $extension->info['project'] : '',
                 'display_name' => $extension->info['name']. ' ('. $extension->getName(). ')',
                 'name' => $extension->getName(),
                 'type' => $extension->getType(),

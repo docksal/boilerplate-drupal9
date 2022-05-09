@@ -42,7 +42,7 @@ class ChainRouterTest extends TestCase
      */
     private $context;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->router = new ChainRouter($this->createMock(LoggerInterface::class));
         $this->context = $this->createMock(RequestContext::class);
@@ -130,22 +130,12 @@ class ChainRouterTest extends TestCase
             ->setMethods(['sortRouters'])
             ->getMock();
         $router
-            ->expects($this->at(0))
+            ->expects($this->exactly(2))
             ->method('sortRouters')
-            ->will(
-                $this->returnValue(
-                    [$high, $medium, $low]
-                )
-            )
-        ;
-        // The second time sortRouters() is called, we're supposed to get the newly added router ($highest)
-        $router
-            ->expects($this->at(1))
-            ->method('sortRouters')
-            ->will(
-                $this->returnValue(
-                    [$highest, $high, $medium, $low]
-                )
+            ->willReturnOnConsecutiveCalls(
+                [$high, $medium, $low],
+                // The second time sortRouters() is called, we're supposed to get the newly added router ($highest)
+                [$highest, $high, $medium, $low]
             )
         ;
 
@@ -486,14 +476,19 @@ class ChainRouterTest extends TestCase
     public function testMatchWithRequestMatchersNotFound()
     {
         $url = '/test';
-        $request = Request::create('/test');
+        $expected = Request::create('/test');
+        $expected->server->remove('REQUEST_TIME_FLOAT');
 
         $high = $this->createMock(RequestMatcher::class);
 
         $high
             ->expects($this->once())
             ->method('matchRequest')
-            ->with($request)
+            ->with($this->callback(function (Request $actual) use ($expected): bool {
+                $actual->server->remove('REQUEST_TIME_FLOAT');
+
+                return $actual == $expected;
+            }))
             ->will($this->throwException(new ResourceNotFoundException()))
         ;
 

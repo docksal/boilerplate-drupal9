@@ -79,11 +79,11 @@ class MergeExtensionConfigurationPass implements CompilerPassInterface
                     $container->getParameterBag()->mergeEnvPlaceholders($resolvingBag);
                 }
 
-                throw $e;
-            } finally {
                 if ($configAvailable) {
                     BaseNode::resetPlaceholders();
                 }
+
+                throw $e;
             }
 
             if ($resolvingBag instanceof MergeExtensionConfigurationParameterBag) {
@@ -93,6 +93,10 @@ class MergeExtensionConfigurationPass implements CompilerPassInterface
 
             $container->merge($tmpContainer);
             $container->getParameterBag()->add($parameters);
+        }
+
+        if ($configAvailable) {
+            BaseNode::resetPlaceholders();
         }
 
         $container->addDefinitions($definitions);
@@ -139,7 +143,7 @@ class MergeExtensionConfigurationParameterBag extends EnvPlaceholderParameterBag
      */
     public function getEnvPlaceholders(): array
     {
-        return null !== $this->processedEnvPlaceholders ? $this->processedEnvPlaceholders : parent::getEnvPlaceholders();
+        return $this->processedEnvPlaceholders ?? parent::getEnvPlaceholders();
     }
 
     public function getUnusedEnvPlaceholders(): array
@@ -205,7 +209,7 @@ class MergeExtensionConfigurationContainerBuilder extends ContainerBuilder
         }
 
         foreach ($bag->getEnvPlaceholders() as $env => $placeholders) {
-            if (false === strpos($env, ':')) {
+            if (!str_contains($env, ':')) {
                 continue;
             }
             foreach ($placeholders as $placeholder) {

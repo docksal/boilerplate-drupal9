@@ -40,6 +40,7 @@ class ThemeTestSubscriber implements EventSubscriberInterface {
    * Constructs a new ThemeTestSubscriber.
    *
    * @param \Drupal\Core\Routing\RouteMatchInterface $current_route_match
+   *   The route match handler.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer.
    */
@@ -78,11 +79,11 @@ class ThemeTestSubscriber implements EventSubscriberInterface {
    */
   public function onView(RequestEvent $event) {
     $current_route = $this->currentRouteMatch->getRouteName();
-    $entity_autcomplete_route = [
+    $entity_autocomplete_route = [
       'system.entity_autocomplete',
     ];
 
-    if (in_array($current_route, $entity_autcomplete_route)) {
+    if (in_array($current_route, $entity_autocomplete_route)) {
       if ($this->container->initialized('theme.registry')) {
         throw new \Exception('registry initialized');
       }

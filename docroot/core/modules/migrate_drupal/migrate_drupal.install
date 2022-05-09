@@ -2,10 +2,12 @@
 
 /**
  * @file
- * Contains install and update functions for Migrate Drupal
+ * Contains install and update functions for Migrate Drupal.
  */
 
 use Drupal\Core\Database\Database;
+
+// cspell:ignore sourceid
 
 /**
  * Implements hook_update_last_removed().

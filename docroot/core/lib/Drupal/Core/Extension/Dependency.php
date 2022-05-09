@@ -124,7 +124,7 @@ class Dependency {
    */
   public static function createFromString($dependency) {
     if (strpos($dependency, ':') !== FALSE) {
-      list($project, $dependency) = explode(':', $dependency);
+      [$project, $dependency] = explode(':', $dependency);
     }
     else {
       $project = '';
@@ -139,7 +139,7 @@ class Dependency {
    * Prevents unnecessary serialization of constraint objects.
    *
    * @return array
-   *   The properties to seriailize.
+   *   The properties to serialize.
    */
   public function __sleep() {
     return ['name', 'project', 'constraintString'];

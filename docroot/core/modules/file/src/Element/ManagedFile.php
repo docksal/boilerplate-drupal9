@@ -15,6 +15,8 @@ use Drupal\Core\Url;
 use Drupal\file\Entity\File;
 use Symfony\Component\HttpFoundation\Request;
 
+// cspell:ignore filefield
+
 /**
  * Provides an AJAX/progress aware widget for uploading and saving a file.
  *
@@ -26,7 +28,7 @@ class ManagedFile extends FormElement {
    * {@inheritdoc}
    */
   public function getInfo() {
-    $class = get_class($this);
+    $class = static::class;
     return [
       '#input' => TRUE,
       '#process' => [
@@ -96,6 +98,10 @@ class ManagedFile extends FormElement {
           foreach ($input['fids'] as $fid) {
             if ($file = File::load($fid)) {
               $fids[] = $file->id();
+              if (!$file->access('download')) {
+                $force_default = TRUE;
+                break;
+              }
               // Temporary files that belong to other users should never be
               // allowed.
               if ($file->isTemporary()) {
@@ -130,11 +136,11 @@ class ManagedFile extends FormElement {
     // default value.
     if ($input === FALSE || $force_default) {
       if ($element['#extended']) {
-        $default_fids = isset($element['#default_value']['fids']) ? $element['#default_value']['fids'] : [];
-        $return = isset($element['#default_value']) ? $element['#default_value'] : ['fids' => []];
+        $default_fids = $element['#default_value']['fids'] ?? [];
+        $return = $element['#default_value'] ?? ['fids' => []];
       }
       else {
-        $default_fids = isset($element['#default_value']) ? $element['#default_value'] : [];
+        $default_fids = $element['#default_value'] ?? [];
         $return = ['fids' => []];
       }
 
@@ -214,7 +220,7 @@ class ManagedFile extends FormElement {
     // This is used sometimes so let's implode it just once.
     $parents_prefix = implode('_', $element['#parents']);
 
-    $fids = isset($element['#value']['fids']) ? $element['#value']['fids'] : [];
+    $fids = $element['#value']['fids'] ?? [];
 
     // Set some default element properties.
     $element['#progress_indicator'] = empty($element['#progress_indicator']) ? 'none' : $element['#progress_indicator'];
@@ -225,7 +231,7 @@ class ManagedFile extends FormElement {
     $ajax_wrapper_id = Html::getUniqueId('ajax-wrapper');
 
     $ajax_settings = [
-      'callback' => [get_called_class(), 'uploadAjaxCallback'],
+      'callback' => [static::class, 'uploadAjaxCallback'],
       'options' => [
         'query' => [
           'element_parents' => implode('/', $element['#array_parents']),

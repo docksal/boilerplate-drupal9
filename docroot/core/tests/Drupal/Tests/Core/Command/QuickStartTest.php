@@ -60,7 +60,6 @@ class QuickStartTest extends TestCase {
     }
     // Get a lock and a valid site path.
     $this->testDb = new TestDatabase();
-    include $this->root . '/core/includes/bootstrap.inc';
   }
 
   /**
@@ -86,7 +85,7 @@ class QuickStartTest extends TestCase {
    * Tests the quick-start command.
    */
   public function testQuickStartCommand() {
-    if (version_compare(phpversion(), DRUPAL_MINIMUM_SUPPORTED_PHP) < 0) {
+    if (version_compare(phpversion(), \Drupal::MINIMUM_SUPPORTED_PHP) < 0) {
       $this->markTestSkipped();
     }
     if (version_compare(\SQLite3::version()['versionString'], Tasks::SQLITE_MINIMUM_VERSION) < 0) {
@@ -109,16 +108,16 @@ class QuickStartTest extends TestCase {
     $process->start();
     $guzzle = new Client();
     $port = FALSE;
-    while ($process->isRunning()) {
-      if (preg_match('/127.0.0.1:(\d+)/', $process->getOutput(), $match)) {
+    $process->waitUntil(function ($type, $output) use (&$port) {
+      if (preg_match('/127.0.0.1:(\d+)/', $output, $match)) {
         $port = $match[1];
-        break;
+        return TRUE;
       }
-      // Wait for more output.
-      sleep(1);
-    }
+    });
     // The progress bar uses STDERR to write messages.
     $this->assertStringContainsString('Congratulations, you installed Drupal!', $process->getErrorOutput());
+    // Ensure the command does not trigger any PHP deprecations.
+    $this->assertStringNotContainsString('Deprecated', $process->getErrorOutput());
     $this->assertNotFalse($port, "Web server running on port $port");
 
     // Give the server a couple of seconds to be ready.
@@ -144,7 +143,7 @@ class QuickStartTest extends TestCase {
    * Tests that the installer throws a requirement error on older PHP versions.
    */
   public function testPhpRequirement() {
-    if (version_compare(phpversion(), DRUPAL_MINIMUM_SUPPORTED_PHP) >= 0) {
+    if (version_compare(phpversion(), \Drupal::MINIMUM_SUPPORTED_PHP) >= 0) {
       $this->markTestSkipped();
     }
 
@@ -158,16 +157,11 @@ class QuickStartTest extends TestCase {
     ];
     $process = new Process($install_command, NULL, ['DRUPAL_DEV_SITE_PATH' => $this->testDb->getTestSitePath()]);
     $process->setTimeout(500);
-    $process->start();
-    while ($process->isRunning()) {
-      // Wait for more output.
-      sleep(1);
-    }
-
+    $process->run();
     $error_output = $process->getErrorOutput();
     $this->assertStringContainsString('Your PHP installation is too old.', $error_output);
     $this->assertStringContainsString('Drupal requires at least PHP', $error_output);
-    $this->assertStringContainsString(DRUPAL_MINIMUM_SUPPORTED_PHP, $error_output);
+    $this->assertStringContainsString(\Drupal::MINIMUM_SUPPORTED_PHP, $error_output);
 
     // Stop the web server.
     $process->stop();
@@ -177,7 +171,7 @@ class QuickStartTest extends TestCase {
    * Tests the quick-start commands.
    */
   public function testQuickStartInstallAndServerCommands() {
-    if (version_compare(phpversion(), DRUPAL_MINIMUM_SUPPORTED_PHP) < 0) {
+    if (version_compare(phpversion(), \Drupal::MINIMUM_SUPPORTED_PHP) < 0) {
       $this->markTestSkipped();
     }
     if (version_compare(\SQLite3::version()['versionString'], Tasks::SQLITE_MINIMUM_VERSION) < 0) {
@@ -210,14 +204,12 @@ class QuickStartTest extends TestCase {
     $server_process->start();
     $guzzle = new Client();
     $port = FALSE;
-    while ($server_process->isRunning()) {
-      if (preg_match('/127.0.0.1:(\d+)/', $server_process->getOutput(), $match)) {
+    $server_process->waitUntil(function ($type, $output) use (&$port) {
+      if (preg_match('/127.0.0.1:(\d+)\/user\/reset\/1\//', $output, $match)) {
         $port = $match[1];
-        break;
+        return TRUE;
       }
-      // Wait for more output.
-      sleep(1);
-    }
+    });
     $this->assertEquals('', $server_process->getErrorOutput());
     $this->assertStringContainsString("127.0.0.1:$port/user/reset/1/", $server_process->getOutput());
     $this->assertNotFalse($port, "Web server running on port $port");
@@ -299,7 +291,7 @@ class QuickStartTest extends TestCase {
    * test site can be torn down even if something in the test site is broken.
    *
    * @param string $path
-   *   A string containing either an URI or a file or directory path.
+   *   A string containing either a URI or a file or directory path.
    * @param callable $callback
    *   (optional) Callback function to run on each file prior to deleting it and
    *   on each directory prior to traversing it. For example, can be used to

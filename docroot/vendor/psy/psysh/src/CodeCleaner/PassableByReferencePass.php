@@ -14,6 +14,7 @@ namespace Psy\CodeCleaner;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
+use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
@@ -60,7 +61,7 @@ class PassableByReferencePass extends CodeCleanerPass
                 if (\array_key_exists($key, $node->args)) {
                     $arg = $node->args[$key];
                     if ($param->isPassedByReference() && !$this->isPassableByReference($arg)) {
-                        throw new FatalErrorException(self::EXCEPTION_MESSAGE, 0, E_ERROR, null, $node->getLine());
+                        throw new FatalErrorException(self::EXCEPTION_MESSAGE, 0, \E_ERROR, null, $node->getLine());
                     }
                 }
             }
@@ -81,7 +82,8 @@ class PassableByReferencePass extends CodeCleanerPass
             $arg->value instanceof Variable ||
             $arg->value instanceof FuncCall ||
             $arg->value instanceof MethodCall ||
-            $arg->value instanceof StaticCall;
+            $arg->value instanceof StaticCall ||
+            $arg->value instanceof ArrayDimFetch;
     }
 
     /**
@@ -108,7 +110,7 @@ class PassableByReferencePass extends CodeCleanerPass
             } elseif (++$nonPassable > 2) {
                 // There can be *at most* two non-passable-by-reference args in a row. This is about
                 // as close as we can get to validating the arguments for this function :-/
-                throw new FatalErrorException(self::EXCEPTION_MESSAGE, 0, E_ERROR, null, $node->getLine());
+                throw new FatalErrorException(self::EXCEPTION_MESSAGE, 0, \E_ERROR, null, $node->getLine());
             }
         }
     }

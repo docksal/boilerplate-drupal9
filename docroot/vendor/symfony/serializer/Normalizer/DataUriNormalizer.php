@@ -27,7 +27,7 @@ use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
  */
 class DataUriNormalizer implements NormalizerInterface, DenormalizerInterface, CacheableSupportsMethodInterface
 {
-    private static $supportedTypes = [
+    private const SUPPORTED_TYPES = [
         \SplFileInfo::class => true,
         \SplFileObject::class => true,
         File::class => true,
@@ -44,12 +44,12 @@ class DataUriNormalizer implements NormalizerInterface, DenormalizerInterface, C
     public function __construct($mimeTypeGuesser = null)
     {
         if ($mimeTypeGuesser instanceof DeprecatedMimeTypeGuesserInterface) {
-            @trigger_error(sprintf('Passing a %s to "%s()" is deprecated since Symfony 4.3, pass a "%s" instead.', DeprecatedMimeTypeGuesserInterface::class, __METHOD__, MimeTypeGuesserInterface::class), E_USER_DEPRECATED);
+            @trigger_error(sprintf('Passing a %s to "%s()" is deprecated since Symfony 4.3, pass a "%s" instead.', DeprecatedMimeTypeGuesserInterface::class, __METHOD__, MimeTypeGuesserInterface::class), \E_USER_DEPRECATED);
         } elseif (null === $mimeTypeGuesser) {
             if (class_exists(MimeTypes::class)) {
                 $mimeTypeGuesser = MimeTypes::getDefault();
             } elseif (class_exists(MimeTypeGuesser::class)) {
-                @trigger_error(sprintf('Passing null to "%s()" to use a default MIME type guesser without Symfony Mime installed is deprecated since Symfony 4.3. Try running "composer require symfony/mime".', __METHOD__), E_USER_DEPRECATED);
+                @trigger_error(sprintf('Passing null to "%s()" to use a default MIME type guesser without Symfony Mime installed is deprecated since Symfony 4.3. Try running "composer require symfony/mime".', __METHOD__), \E_USER_DEPRECATED);
                 $mimeTypeGuesser = MimeTypeGuesser::getInstance();
             }
         } elseif (!$mimeTypeGuesser instanceof MimeTypes) {
@@ -61,6 +61,8 @@ class DataUriNormalizer implements NormalizerInterface, DenormalizerInterface, C
 
     /**
      * {@inheritdoc}
+     *
+     * @return string
      */
     public function normalize($object, $format = null, array $context = [])
     {
@@ -102,16 +104,18 @@ class DataUriNormalizer implements NormalizerInterface, DenormalizerInterface, C
      *
      * @throws InvalidArgumentException
      * @throws NotNormalizableValueException
+     *
+     * @return \SplFileInfo
      */
     public function denormalize($data, $type, $format = null, array $context = [])
     {
-        if (!preg_match('/^data:([a-z0-9][a-z0-9\!\#\$\&\-\^\_\+\.]{0,126}\/[a-z0-9][a-z0-9\!\#\$\&\-\^\_\+\.]{0,126}(;[a-z0-9\-]+\=[a-z0-9\-]+)?)?(;base64)?,[a-z0-9\!\$\&\\\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i', $data)) {
+        if (null === $data || !preg_match('/^data:([a-z0-9][a-z0-9\!\#\$\&\-\^\_\+\.]{0,126}\/[a-z0-9][a-z0-9\!\#\$\&\-\^\_\+\.]{0,126}(;[a-z0-9\-]+\=[a-z0-9\-]+)?)?(;base64)?,[a-z0-9\!\$\&\\\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i', $data)) {
             throw new NotNormalizableValueException('The provided "data:" URI is not valid.');
         }
 
         try {
             switch ($type) {
-                case 'Symfony\Component\HttpFoundation\File\File':
+                case File::class:
                     return new File($data, false);
 
                 case 'SplFileObject':
@@ -130,7 +134,7 @@ class DataUriNormalizer implements NormalizerInterface, DenormalizerInterface, C
      */
     public function supportsDenormalization($data, $type, $format = null)
     {
-        return isset(self::$supportedTypes[$type]);
+        return isset(self::SUPPORTED_TYPES[$type]);
     }
 
     /**

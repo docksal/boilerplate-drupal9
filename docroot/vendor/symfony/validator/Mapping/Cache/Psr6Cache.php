@@ -14,7 +14,7 @@ namespace Symfony\Component\Validator\Mapping\Cache;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 
-@trigger_error(sprintf('The "%s" class is deprecated since Symfony 4.4.', Psr6Cache::class), E_USER_DEPRECATED);
+@trigger_error(sprintf('The "%s" class is deprecated since Symfony 4.4.', Psr6Cache::class), \E_USER_DEPRECATED);
 
 /**
  * PSR-6 adapter.
@@ -70,7 +70,7 @@ class Psr6Cache implements CacheInterface
      */
     private function escapeClassName(string $class): string
     {
-        if (false !== strpos($class, '@')) {
+        if (str_contains($class, '@')) {
             // anonymous class: replace all PSR6-reserved characters
             return str_replace(["\0", '\\', '/', '@', ':', '{', '}', '(', ')'], '.', $class);
         }

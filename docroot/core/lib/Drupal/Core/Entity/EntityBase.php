@@ -104,14 +104,14 @@ abstract class EntityBase implements EntityInterface {
    * {@inheritdoc}
    */
   public function id() {
-    return isset($this->id) ? $this->id : NULL;
+    return $this->id ?? NULL;
   }
 
   /**
    * {@inheritdoc}
    */
   public function uuid() {
-    return isset($this->uuid) ? $this->uuid : NULL;
+    return $this->uuid ?? NULL;
   }
 
   /**
@@ -271,7 +271,7 @@ abstract class EntityBase implements EntityInterface {
       $parameter_name = $this->getEntityType()->getBundleEntityType() ?: $this->getEntityType()->getKey('bundle');
       $uri_route_parameters[$parameter_name] = $this->bundle();
     }
-    if ($rel === 'revision' && $this instanceof RevisionableInterface) {
+    if ($this instanceof RevisionableInterface && strpos($rel, 'revision') === 0) {
       $uri_route_parameters[$this->getEntityTypeId() . '_revision'] = $this->getRevisionId();
     }
 
@@ -484,7 +484,7 @@ abstract class EntityBase implements EntityInterface {
   public static function load($id) {
     $entity_type_repository = \Drupal::service('entity_type.repository');
     $entity_type_manager = \Drupal::entityTypeManager();
-    $storage = $entity_type_manager->getStorage($entity_type_repository->getEntityTypeFromClass(get_called_class()));
+    $storage = $entity_type_manager->getStorage($entity_type_repository->getEntityTypeFromClass(static::class));
     return $storage->load($id);
   }
 
@@ -494,7 +494,7 @@ abstract class EntityBase implements EntityInterface {
   public static function loadMultiple(array $ids = NULL) {
     $entity_type_repository = \Drupal::service('entity_type.repository');
     $entity_type_manager = \Drupal::entityTypeManager();
-    $storage = $entity_type_manager->getStorage($entity_type_repository->getEntityTypeFromClass(get_called_class()));
+    $storage = $entity_type_manager->getStorage($entity_type_repository->getEntityTypeFromClass(static::class));
     return $storage->loadMultiple($ids);
   }
 
@@ -504,7 +504,7 @@ abstract class EntityBase implements EntityInterface {
   public static function create(array $values = []) {
     $entity_type_repository = \Drupal::service('entity_type.repository');
     $entity_type_manager = \Drupal::entityTypeManager();
-    $storage = $entity_type_manager->getStorage($entity_type_repository->getEntityTypeFromClass(get_called_class()));
+    $storage = $entity_type_manager->getStorage($entity_type_repository->getEntityTypeFromClass(static::class));
     return $storage->create($values);
   }
 
@@ -587,10 +587,36 @@ abstract class EntityBase implements EntityInterface {
    */
   public function getTypedData() {
     if (!isset($this->typedData)) {
-      $class = \Drupal::typedDataManager()->getDefinition('entity')['class'];
+      $class = $this->getTypedDataClass();
       $this->typedData = $class::createFromEntity($this);
     }
     return $this->typedData;
+  }
+
+  /**
+   * Returns the typed data class name for this entity.
+   *
+   * @return string
+   *   The string representing the typed data class name.
+   *
+   * @see \Drupal\Core\Entity\Plugin\DataType\EntityAdapter
+   */
+  private function getTypedDataClass(): string {
+    $typed_data_manager = \Drupal::typedDataManager();
+
+    // Check more specific data types that could apply to this entity.
+    $candidate_data_types = [
+      "entity:{$this->getEntityTypeId()}:{$this->bundle()}",
+      "entity:{$this->getEntityTypeId()}",
+    ];
+    foreach ($candidate_data_types as $candidate_data_type) {
+      if ($typed_data_manager->hasDefinition($candidate_data_type)) {
+        return $typed_data_manager->getDefinition($candidate_data_type)['class'];
+      }
+    }
+
+    // Fall back to the generic entity definition.
+    return $typed_data_manager->getDefinition('entity')['class'];
   }
 
   /**

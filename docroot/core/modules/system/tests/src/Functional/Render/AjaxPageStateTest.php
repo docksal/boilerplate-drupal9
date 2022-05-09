@@ -24,7 +24,7 @@ class AjaxPageStateTest extends BrowserTestBase {
   protected $defaultTheme = 'stark';
 
   /**
-   * User account with all available permissions
+   * User account with all available permissions.
    *
    * @var \Drupal\Core\Session\AccountInterface
    */
@@ -80,7 +80,7 @@ class AjaxPageStateTest extends BrowserTestBase {
   }
 
   /**
-   * Test if multiple libraries can be excluded.
+   * Tests if multiple libraries can be excluded.
    *
    * The ajax_page_state[libraries] should be able to support multiple libraries
    * comma separated.

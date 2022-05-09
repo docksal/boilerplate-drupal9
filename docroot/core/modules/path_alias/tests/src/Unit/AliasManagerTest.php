@@ -108,7 +108,7 @@ class AliasManagerTest extends UnitTestCase {
    *
    * @covers ::getPathByAlias
    */
-  public function testGetPathByAliasNatch() {
+  public function testGetPathByAliasMatch() {
     $alias = $this->randomMachineName();
     $path = $this->randomMachineName();
 
@@ -463,8 +463,6 @@ class AliasManagerTest extends UnitTestCase {
     $this->assertEquals($path, $this->aliasManager->getPathByAlias($alias, $language->getId()));
 
     // Clear specific source.
-    $this->cache->expects($this->exactly(2))
-      ->method('delete');
     $this->aliasManager->cacheClear($path);
 
     // Ensure cache has been cleared (this will be the 2nd call to

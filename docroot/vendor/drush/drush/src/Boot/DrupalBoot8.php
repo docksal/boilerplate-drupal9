@@ -5,9 +5,9 @@ namespace Drush\Boot;
 use Consolidation\AnnotatedCommand\AnnotationData;
 use Drupal\Core\Database\Database;
 use Drupal\Core\DrupalKernel;
+use Drush\Drupal\DrushLoggerServiceProvider;
 use Drush\Drupal\DrushServiceModifier;
 use Drush\Drush;
-use Drush\Log\DrushLog;
 use Drush\Log\LogLevel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -122,19 +122,6 @@ class DrupalBoot8 extends DrupalBoot implements AutoloaderAwareInterface
         return $site_path;
     }
 
-    public function addLogger()
-    {
-        // Provide a logger which sends
-        // output to log(). This should catch every message logged through every
-        // channel.
-        $container = \Drupal::getContainer();
-        $parser = $container->get('logger.log_message_parser');
-
-        $drushLogger = Drush::logger();
-        $this->drupalLoggerAdapter = new DrushLog($parser, $drushLogger);
-        $container->get('logger.factory')->addLogger($this->drupalLoggerAdapter);
-    }
-
     public function bootstrapDrupalCore(BootstrapManager $manager, $drupal_root)
     {
         return Path::join($drupal_root, 'core');
@@ -159,8 +146,9 @@ class DrupalBoot8 extends DrupalBoot implements AutoloaderAwareInterface
         $server = [
             'SCRIPT_FILENAME' => getcwd() . '/index.php',
             'SCRIPT_NAME' => isset($parsed_url['path']) ? $parsed_url['path'] . 'index.php' : '/index.php',
-        ];
+        ] + $_SERVER;
         $request = Request::create($uri, 'GET', [], [], [], $server);
+        $request->overrideGlobals();
         $this->setRequest($request);
         return true;
     }
@@ -202,7 +190,7 @@ class DrupalBoot8 extends DrupalBoot implements AutoloaderAwareInterface
             $connection_options = $connection->getConnectionOptions();
             $connection->open($connection_options);
         } catch (\Exception $e) {
-            $this->logger->log(LogLevel::BOOTSTRAP, 'Unable to connect to database. More information may be available by running `drush status`. This may occur when Drush is trying to bootstrap a site that has not been installed or does not have a configured database. In this case you can select another site with a working database setup by specifying the URI to use with the --uri parameter on the command line. See `drush topic docs-aliases` for details.');
+            $this->logger->log(LogLevel::BOOTSTRAP, 'Unable to connect to database with message: ' . $e->getMessage() . '. More debug information is available by running `drush status`. This may occur when Drush is trying to bootstrap a site that has not been installed or does not have a configured database. In this case you can select another site with a working database setup by specifying the URI to use with the --uri parameter on the command line. See `drush topic docs-aliases` for details.');
             return false;
         }
         if (!$connection->schema()->tableExists('key_value')) {
@@ -220,6 +208,9 @@ class DrupalBoot8 extends DrupalBoot implements AutoloaderAwareInterface
 
     public function bootstrapDrupalConfiguration(BootstrapManager $manager, AnnotationData $annotationData = null)
     {
+        // Coax \Drupal\Core\DrupalKernel::discoverServiceProviders to add our logger.
+        $GLOBALS['conf']['container_service_providers'][] = DrushLoggerServiceProvider::class;
+
         // Default to the standard kernel.
         $kernel = Kernels::DRUPAL;
         if (!empty($annotationData)) {
@@ -230,7 +221,7 @@ class DrupalBoot8 extends DrupalBoot implements AutoloaderAwareInterface
         $kernel_factory = Kernels::getKernelFactory($kernel);
         $allow_dumping = $kernel !== Kernels::UPDATE;
         /** @var \Drupal\Core\DrupalKernelInterface kernel */
-        $this->kernel = $kernel_factory($request, $classloader, 'prod', $allow_dumping);
+        $this->kernel = $kernel_factory($request, $classloader, 'prod', $allow_dumping, $manager->getRoot());
         // Include Drush services in the container.
         // @see Drush\Drupal\DrupalKernel::addServiceModifier()
         $this->kernel->addServiceModifier(new DrushServiceModifier());
@@ -248,7 +239,6 @@ class DrupalBoot8 extends DrupalBoot implements AutoloaderAwareInterface
     {
         $this->logger->debug(dt('Start bootstrap of the Drupal Kernel.'));
         $this->kernel->boot();
-        $this->addLogger();
         $this->kernel->preHandle($this->getRequest());
         $this->logger->debug(dt('Finished bootstrap of the Drupal Kernel.'));
 

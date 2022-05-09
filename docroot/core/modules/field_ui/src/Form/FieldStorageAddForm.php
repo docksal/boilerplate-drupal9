@@ -187,9 +187,7 @@ class FieldStorageAddForm extends FormBase {
     $field_prefix = $this->config('field_ui.settings')->get('field_prefix');
     $form['new_storage_wrapper']['field_name'] = [
       '#type' => 'machine_name',
-      // This field should stay LTR even for RTL languages.
-      '#field_prefix' => '<span dir="ltr">' . $field_prefix,
-      '#field_suffix' => '</span>&lrm;',
+      '#field_prefix' => $field_prefix,
       '#size' => 15,
       '#description' => $this->t('A unique machine-readable name containing letters, numbers, and underscores.'),
       // Calculate characters depending on the length of the field prefix
@@ -340,7 +338,7 @@ class FieldStorageAddForm extends FormBase {
 
       // Check if we're dealing with a preconfigured field.
       if (strpos($field_storage_values['type'], 'field_ui:') !== FALSE) {
-        list(, $field_type, $option_key) = explode(':', $field_storage_values['type'], 3);
+        [, $field_type, $option_key] = explode(':', $field_storage_values['type'], 3);
         $field_storage_values['type'] = $field_type;
 
         $field_definition = $this->fieldTypePluginManager->getDefinition($field_type);
@@ -365,10 +363,10 @@ class FieldStorageAddForm extends FormBase {
           }
         }
 
-        $widget_id = isset($field_options['entity_form_display']['type']) ? $field_options['entity_form_display']['type'] : NULL;
-        $widget_settings = isset($field_options['entity_form_display']['settings']) ? $field_options['entity_form_display']['settings'] : [];
-        $formatter_id = isset($field_options['entity_view_display']['type']) ? $field_options['entity_view_display']['type'] : NULL;
-        $formatter_settings = isset($field_options['entity_view_display']['settings']) ? $field_options['entity_view_display']['settings'] : [];
+        $widget_id = $field_options['entity_form_display']['type'] ?? NULL;
+        $widget_settings = $field_options['entity_form_display']['settings'] ?? [];
+        $formatter_id = $field_options['entity_view_display']['type'] ?? NULL;
+        $formatter_settings = $field_options['entity_view_display']['settings'] ?? [];
       }
 
       // Create the field storage and field.

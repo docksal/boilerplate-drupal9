@@ -304,7 +304,7 @@ class EntityForm extends FormBase implements EntityFormInterface {
   }
 
   /**
-   * Copies top-level form values to entity properties
+   * Copies top-level form values to entity properties.
    *
    * This should not change existing entity properties that are not being edited
    * by this form.
@@ -324,7 +324,7 @@ class EntityForm extends FormBase implements EntityFormInterface {
       $values = array_diff_key($values, $this->entity->getPluginCollections());
     }
 
-    // @todo: This relies on a method that only exists for config and content
+    // @todo This relies on a method that only exists for config and content
     //   entities, in a different way. Consider moving this logic to a config
     //   entity specific implementation.
     foreach ($values as $key => $value) {

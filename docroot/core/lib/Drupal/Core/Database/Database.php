@@ -38,7 +38,7 @@ abstract class Database {
   const RETURN_INSERT_ID = 3;
 
   /**
-   * An nested array of all active connections. It is keyed by database name
+   * A nested array of all active connections. It is keyed by database name
    * and target.
    *
    * @var array
@@ -216,17 +216,24 @@ abstract class Database {
     }
 
     // Parse the prefix information.
+    // @todo in Drupal 10, fail hard if $info['prefix'] is an array.
+    // @see https://www.drupal.org/project/drupal/issues/3124382
     if (!isset($info['prefix'])) {
       // Default to an empty prefix.
-      $info['prefix'] = [
-        'default' => '',
-      ];
+      $info['prefix'] = '';
     }
-    elseif (!is_array($info['prefix'])) {
-      // Transform the flat form into an array form.
-      $info['prefix'] = [
-        'default' => $info['prefix'],
-      ];
+    elseif (is_array($info['prefix'])) {
+      $prefix = $info['prefix']['default'] ?? '';
+      unset($info['prefix']['default']);
+      // If there are keys left besides the 'default' one, we are in a
+      // multi-prefix scenario (for per-table prefixing, or migrations).
+      // In that case, we put the non-default keys in a 'extra_prefix' key
+      // to avoid mixing up with the normal 'prefix', which is a string since
+      // Drupal 9.1.0.
+      if (count($info['prefix'])) {
+        $info['extra_prefix'] = $info['prefix'];
+      }
+      $info['prefix'] = $prefix;
     }
 
     // Fallback for Drupal 7 settings.php if namespace is not provided.
@@ -405,26 +412,15 @@ abstract class Database {
     if (!isset($key)) {
       $key = self::$activeKey;
     }
-    // To close a connection, it needs to be set to NULL and removed from the
-    // static variable. In all cases, closeConnection() might be called for a
-    // connection that was not opened yet, in which case the key is not defined
-    // yet and we just ensure that the connection key is undefined.
     if (isset($target)) {
-      if (isset(self::$connections[$key][$target])) {
-        self::$connections[$key][$target]->destroy();
-        self::$connections[$key][$target] = NULL;
-      }
       unset(self::$connections[$key][$target]);
     }
     else {
-      if (isset(self::$connections[$key])) {
-        foreach (self::$connections[$key] as $target => $connection) {
-          self::$connections[$key][$target]->destroy();
-          self::$connections[$key][$target] = NULL;
-        }
-      }
       unset(self::$connections[$key]);
     }
+    // Force garbage collection to run. This ensures that PDO connection objects
+    // and destroyed and results in the connections being closed.
+    gc_collect_cycles();
   }
 
   /**
@@ -634,8 +630,14 @@ abstract class Database {
    *
    * @return string
    *   The PHP namespace of the driver's database.
+   *
+   * @deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. There is no
+   *   replacement as $connection_info['namespace'] is always set.
+   *
+   * @see https://www.drupal.org/node/3127769
    */
   protected static function getDatabaseDriverNamespace(array $connection_info) {
+    @trigger_error(__METHOD__ . " is deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. There is no replacement as \$connection_info['namespace'] is always set. See https://www.drupal.org/node/3127769.", E_USER_DEPRECATED);
     if (isset($connection_info['namespace'])) {
       return $connection_info['namespace'];
     }

@@ -10,6 +10,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\File\Exception\FileException;
 use Drupal\file\FileInterface;
 use Drupal\user\EntityOwnerTrait;
+use Symfony\Component\Mime\MimeTypeGuesserInterface;
 
 /**
  * Defines the file entity class.
@@ -79,11 +80,9 @@ class File extends ContentEntityBase implements FileInterface {
    * {@inheritdoc}
    */
   public function createFileUrl($relative = TRUE) {
-    $url = file_create_url($this->getFileUri());
-    if ($relative && $url) {
-      $url = file_url_transform_relative($url);
-    }
-    return $url;
+    /** @var \Drupal\Core\File\FileUrlGeneratorInterface $file_url_generator */
+    $file_url_generator = \Drupal::service('file_url_generator');
+    return $relative ? $file_url_generator->generateString($this->getFileUri()) : $file_url_generator->generateAbsoluteString($this->getFileUri());
   }
 
   /**
@@ -125,7 +124,7 @@ class File extends ContentEntityBase implements FileInterface {
    * {@inheritdoc}
    */
   public function isPermanent() {
-    return $this->get('status')->value == FILE_STATUS_PERMANENT;
+    return $this->get('status')->value == static::STATUS_PERMANENT;
   }
 
   /**
@@ -139,7 +138,7 @@ class File extends ContentEntityBase implements FileInterface {
    * {@inheritdoc}
    */
   public function setPermanent() {
-    $this->get('status')->value = FILE_STATUS_PERMANENT;
+    $this->get('status')->value = static::STATUS_PERMANENT;
   }
 
   /**
@@ -160,7 +159,14 @@ class File extends ContentEntityBase implements FileInterface {
 
     // Automatically detect filemime if not set.
     if (!isset($values['filemime']) && isset($values['uri'])) {
-      $values['filemime'] = \Drupal::service('file.mime_type.guesser')->guess($values['uri']);
+      $guesser = \Drupal::service('file.mime_type.guesser');
+      if ($guesser instanceof MimeTypeGuesserInterface) {
+        $values['filemime'] = $guesser->guessMimeType($values['uri']);
+      }
+      else {
+        $values['filemime'] = $guesser->guess($values['uri']);
+        @trigger_error('\Symfony\Component\HttpFoundation\File\MimeType\MimeTypeGuesserInterface is deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. Implement \Symfony\Component\Mime\MimeTypeGuesserInterface instead. See https://www.drupal.org/node/3133341', E_USER_DEPRECATED);
+      }
     }
   }
 

@@ -39,7 +39,7 @@ class TextFormat extends RenderElement {
    * {@inheritdoc}
    */
   public function getInfo() {
-    $class = get_class($this);
+    $class = static::class;
     return [
       '#process' => [
         [$class, 'processFormat'],
@@ -84,7 +84,7 @@ class TextFormat extends RenderElement {
 
     // Ensure that children appear as subkeys of this element.
     $element['#tree'] = TRUE;
-    $blacklist = [
+    $keys_not_to_copy = [
       // Make \Drupal::formBuilder()->doBuildForm() regenerate child properties.
       '#parents',
       '#id',
@@ -108,7 +108,7 @@ class TextFormat extends RenderElement {
     // Move this element into sub-element 'value'.
     unset($element['value']);
     foreach (Element::properties($element) as $key) {
-      if (!in_array($key, $blacklist)) {
+      if (!in_array($key, $keys_not_to_copy)) {
         $element['value'][$key] = $element[$key];
       }
     }
@@ -163,6 +163,11 @@ class TextFormat extends RenderElement {
       if ($element['#format'] !== $fallback_format && count($formats) > 1) {
         unset($formats[$fallback_format]);
       }
+    }
+
+    // If the value element has #states set, copy it to the format element.
+    if (isset($element['value']['#states'])) {
+      $element['format']['#states'] = $element['value']['#states'];
     }
 
     // Prepare text format guidelines.

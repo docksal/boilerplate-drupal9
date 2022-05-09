@@ -266,7 +266,7 @@ class EntityResolverManagerTest extends UnitTestCase {
   }
 
   /**
-   * Tests setRouteOptions() with an form parameter without interface.
+   * Tests setRouteOptions() with a form parameter without interface.
    *
    * @covers ::setRouteOptions
    * @covers ::getControllerClass
@@ -463,7 +463,7 @@ class EntityResolverManagerTest extends UnitTestCase {
       ]));
     $this->entityTypeManager->expects($this->any())
       ->method('getDefinition')
-      ->will($this->returnCallback(function ($entity_type) use ($definition, $revisionable_definition) {
+      ->willReturnCallback(function ($entity_type) use ($definition, $revisionable_definition) {
         if ($entity_type == 'entity_test') {
           return $definition;
         }
@@ -473,7 +473,7 @@ class EntityResolverManagerTest extends UnitTestCase {
         else {
           return NULL;
         }
-      }));
+      });
   }
 
 }

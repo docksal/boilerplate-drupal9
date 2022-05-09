@@ -58,7 +58,7 @@ abstract class FileLoader extends BaseFileLoader
         if ($ignoreNotFound = 'not_found' === $ignoreErrors) {
             $args[2] = false;
         } elseif (!\is_bool($ignoreErrors)) {
-            @trigger_error(sprintf('Invalid argument $ignoreErrors provided to %s::import(): boolean or "not_found" expected, %s given.', static::class, \gettype($ignoreErrors)), E_USER_DEPRECATED);
+            @trigger_error(sprintf('Invalid argument $ignoreErrors provided to %s::import(): boolean or "not_found" expected, %s given.', static::class, \gettype($ignoreErrors)), \E_USER_DEPRECATED);
             $args[2] = (bool) $ignoreErrors;
         }
 
@@ -91,7 +91,7 @@ abstract class FileLoader extends BaseFileLoader
      */
     public function registerClasses(Definition $prototype, $namespace, $resource, $exclude = null)
     {
-        if ('\\' !== substr($namespace, -1)) {
+        if (!str_ends_with($namespace, '\\')) {
             throw new InvalidArgumentException(sprintf('Namespace prefix must end with a "\\": "%s".', $namespace));
         }
         if (!preg_match('/^(?:[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*+\\\\)++$/', $namespace)) {
@@ -166,8 +166,8 @@ abstract class FileLoader extends BaseFileLoader
                     $excludePrefix = $resource->getPrefix();
                 }
 
-                // normalize Windows slashes
-                $excludePaths[str_replace('\\', '/', $path)] = true;
+                // normalize Windows slashes and remove trailing slashes
+                $excludePaths[rtrim(str_replace('\\', '/', $path), '/')] = true;
             }
         }
 
@@ -179,7 +179,7 @@ abstract class FileLoader extends BaseFileLoader
             if (null === $prefixLen) {
                 $prefixLen = \strlen($resource->getPrefix());
 
-                if ($excludePrefix && 0 !== strpos($excludePrefix, $resource->getPrefix())) {
+                if ($excludePrefix && !str_starts_with($excludePrefix, $resource->getPrefix())) {
                     throw new InvalidArgumentException(sprintf('Invalid "exclude" pattern when importing classes for "%s": make sure your "exclude" pattern (%s) is a subset of the "resource" pattern (%s).', $namespace, $excludePattern, $pattern));
                 }
             }

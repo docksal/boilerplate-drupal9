@@ -11,7 +11,7 @@ use Drupal\views\Plugin\views\argument\ArgumentPluginBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Defines a argument validator plugin for each entity type.
+ * Defines an argument validator plugin for each entity type.
  *
  * @ViewsArgumentValidator(
  *   id = "entity",
@@ -44,7 +44,7 @@ class Entity extends ArgumentValidatorPluginBase {
   protected $multipleCapable = TRUE;
 
   /**
-   * Constructs an \Drupal\views\Plugin\views\argument_validator\Entity object.
+   * Constructs a \Drupal\views\Plugin\views\argument_validator\Entity object.
    *
    * @param array $configuration
    *   A configuration array containing information about the plugin instance.
@@ -209,6 +209,7 @@ class Entity extends ArgumentValidatorPluginBase {
    * Validates an individual entity against class access settings.
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity.
    *
    * @return bool
    *   True if validated.

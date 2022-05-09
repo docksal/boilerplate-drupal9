@@ -4,10 +4,12 @@ namespace Drupal\KernelTests\Core\DrupalKernel;
 
 use Composer\Autoload\ClassLoader;
 use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelInterface;
 use Drupal\KernelTests\KernelTestBase;
 use org\bovigo\vfs\vfsStream;
 use Prophecy\Argument;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Event\KernelEvent;
 
 /**
  * Tests DIC compilation to disk.
@@ -58,6 +60,19 @@ class DrupalKernelTest extends KernelTestBase {
   }
 
   /**
+   * Tests KernelEvent class_alias() override.
+   *
+   * @todo https://www.drupal.org/project/drupal/issues/3197482 Remove this test
+   *   once Drupal is using Symfony 5.3 or higher.
+   */
+  public function testKernelEvent() {
+    $request = Request::createFromGlobals();
+    $kernel = $this->getTestKernel($request);
+    $event = new KernelEvent($kernel, $request, $kernel::MASTER_REQUEST);
+    $this->assertTrue($event->isMainRequest());
+  }
+
+  /**
    * Tests DIC compilation.
    */
   public function testCompileDIC() {
@@ -80,7 +95,7 @@ class DrupalKernelTest extends KernelTestBase {
     // Verify that the list of modules is the same for the initial and the
     // compiled container.
     $module_list = array_keys($container->get('module_handler')->getModuleList());
-    $this->assertEqual(array_values($modules_enabled), $module_list);
+    $this->assertEquals(array_values($modules_enabled), $module_list);
 
     // Get the container another time, simulating a "production" environment.
     $container = $this->getTestKernel($request, NULL)
@@ -93,7 +108,7 @@ class DrupalKernelTest extends KernelTestBase {
     // Verify that the list of modules is the same for the initial and the
     // compiled container.
     $module_list = array_keys($container->get('module_handler')->getModuleList());
-    $this->assertEqual(array_values($modules_enabled), $module_list);
+    $this->assertEquals(array_values($modules_enabled), $module_list);
 
     // Test that our synthetic services are there.
     $class_loader = $container->get('class_loader');
@@ -130,11 +145,8 @@ class DrupalKernelTest extends KernelTestBase {
 
     // Check that the location of the new module is registered.
     $modules = $container->getParameter('container.modules');
-    $this->assertEqual($modules['service_provider_test'], [
-      'type' => 'module',
-      'pathname' => drupal_get_filename('module', 'service_provider_test'),
-      'filename' => NULL,
-    ]);
+    $module_extension_list = $container->get('extension.list.module');
+    $this->assertEquals(['type' => 'module', 'pathname' => $module_extension_list->getPathname('service_provider_test'), 'filename' => NULL], $modules['service_provider_test']);
 
     // Check that the container itself is not among the persist IDs because it
     // does not make sense to persist the container itself.
@@ -160,10 +172,8 @@ class DrupalKernelTest extends KernelTestBase {
       $kernel = DrupalKernel::createFromRequest($request, $class_loader, $environment);
       $this->setSetting('container_yamls', []);
       $this->setSetting('hash_salt', $this->databasePrefix);
-      $kernel->boot();
+      $this->assertInstanceOf(DrupalKernelInterface::class, $kernel->boot(), "Environment $environment should boot.");
     }
-
-    $this->pass('Repeatedly loaded compiled DIC with different environment');
   }
 
   /**
@@ -194,7 +204,7 @@ class DrupalKernelTest extends KernelTestBase {
   }
 
   /**
-   * Data provider for self::testClassLoaderAutoDetect
+   * Data provider for self::testClassLoaderAutoDetect.
    * @return array
    */
   public function providerClassLoaderAutoDetect() {
