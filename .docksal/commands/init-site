@@ -83,7 +83,7 @@ site_install ()
 # Project initialization steps
 fix_permissions
 init_settings
-time site_install
+time -p site_install
 
 echo -e "Open ${yellow}http://${VIRTUAL_HOST}${NC} in your browser to verify the setup."
 echo-yellow "Look for admin login credentials in the output above."

@@ -1,6 +1,6 @@
 <?php
 
-// @codingStandardsIgnoreFile
+// phpcs:ignoreFile
 
 /**
  * @file
@@ -157,22 +157,24 @@ $settings['skip_permissions_hardening'] = TRUE;
 
 // Docksal DB connection settings.
 $databases['default']['default'] = array (
-  'database' => 'default',
-  'username' => 'user',
-  'password' => 'user',
-  'prefix' => '',
-  'host' => 'db',
+  'database' => getenv('MYSQL_DATABASE'),
+  'username' => getenv('MYSQL_USER'),
+  'password' => getenv('MYSQL_PASSWORD'),
+  'host' => getenv('MYSQL_HOST'),
   'port' => '3306',
-  'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
   'driver' => 'mysql',
 );
+
+// This needs to be includes here otherwise installing a site from scratch will
+// write both salt AND local DB setting into settings.php (which we don't want).
+$settings['hash_salt'] = 'WSwxSIzzqrBEA98wSWtJBYOT-MeBzbM9cmkALiKm-d-8TC0mz-ksCzMmx15Y62vbzQgwP1u3ug';
 
 // Workaround for permission issues with NFS shares
 $settings['file_chmod_directory'] = 0777;
 $settings['file_chmod_file'] = 0666;
 
 # File system settings.
-$settings['file_temporary_path'] = '/tmp';
+$config['system.file']['path']['temporary'] = '/tmp';
 
 // Reverse proxy configuration (Docksal vhost-proxy)
 if (PHP_SAPI !== 'cli') {
